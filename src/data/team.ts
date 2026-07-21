@@ -7,18 +7,18 @@ export interface TeamMember {
 
 export const team: TeamMember[] = [
   {
-    name: "Aarav Mehta",
+    name: "Tharun",
     role: "President",
-    initials: "AM",
+    initials: "N",
     links: [
       { label: "GitHub", href: "#" },
       { label: "LinkedIn", href: "#" },
     ],
   },
   {
-    name: "Sara Kim",
-    role: "Vice President",
-    initials: "SK",
+    name: "Harshith Ashok",
+    role: "Techincal Head",
+    initials: "HA",
     links: [
       { label: "GitHub", href: "#" },
       { label: "X", href: "#" },

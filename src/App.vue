@@ -9,12 +9,14 @@ import ProjectsSection from "@/components/sections/ProjectsSection.vue";
 import TimelineSection from "@/components/sections/TimelineSection.vue";
 import StatsSection from "@/components/sections/StatsSection.vue";
 import TeamSection from "@/components/sections/TeamSection.vue";
+import { Analytics } from "@vercel/analytics/vue";
 </script>
 
 <template>
   <div class="min-h-screen bg-bg text-text">
     <AppLoader />
     <TheNavbar />
+    <Analytics />
     <main>
       <HeroSection />
       <AboutSection />
