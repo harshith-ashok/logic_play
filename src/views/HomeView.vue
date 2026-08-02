@@ -90,7 +90,7 @@ onMounted(() => {
               class="h-1.5 w-1.5 rounded-full bg-accent"
               aria-hidden="true"
             />
-            <span>Hacking Since 2025</span>
+            <span>Hacking Since 2014</span>
           </Badge>
         </div>
 
@@ -266,9 +266,9 @@ onMounted(() => {
           <Badge as="a" href="#" tone="solid" size="lg" interactive arrow>
             Apply to Join
           </Badge>
-          <Badge as="a" href="#" size="lg" interactive>
+          <!-- <Badge as="a" href="#" size="lg" interactive>
             Join the Discord
-          </Badge>
+          </Badge> -->
         </div>
       </div>
     </section>

@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import Badge from "../ui/Badge.vue";
 import GridBar from "../ui/GridBar.vue";
-import smallWhite from "../../assets/transparent/small_white.png";
+import smallWhite from "../../assets/transparent/big_white.png";
 
 // Press stays a real route (linked from the footer, and directly shareable)
 // but is deliberately left out of primary nav — it's a reference page, not
@@ -20,9 +20,11 @@ const open = ref(false);
 <template>
   <header class="glass-surface fixed inset-x-0 top-0 z-50 overflow-hidden">
     <GridBar />
-    <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+    <nav
+      class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6"
+    >
       <router-link to="/" class="flex items-center gap-2" @click="open = false">
-        <img :src="smallWhite" alt="Logic Play" class="h-8 w-auto sm:h-9" />
+        <img :src="smallWhite" alt="Logic Play" class="h-8 w-auto sm:h-8" />
       </router-link>
 
       <ul class="hidden items-center gap-2 md:flex">
@@ -63,7 +65,13 @@ const open = ref(false);
     <div v-if="open" class="border-t border-border px-4 pb-4 md:hidden">
       <ul class="flex flex-col gap-2 pt-4">
         <li v-for="link in links" :key="link.to">
-          <Badge :to="link.to" size="sm" interactive class="w-full" @click="open = false">
+          <Badge
+            :to="link.to"
+            size="sm"
+            interactive
+            class="w-full"
+            @click="open = false"
+          >
             {{ link.label }}
           </Badge>
         </li>
