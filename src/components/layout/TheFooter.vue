@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import Badge from "../ui/Badge.vue";
 import GridBar from "../ui/GridBar.vue";
-import HalftoneMark from "../ui/HalftoneMark.vue";
 import smallWhite from "../../assets/transparent/big_white.png";
 
 const links = [
@@ -25,7 +24,7 @@ const socials = [
     <div class="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12 sm:px-6">
       <div class="flex flex-col items-start justify-between gap-8 sm:flex-row">
         <div class="flex items-center gap-3">
-          <img :src="smallWhite" alt="Logic Play" class="h-9 w-auto" />
+          <img :src="smallWhite" alt="Logic Play" class="brand-mark h-9 w-auto" />
           <!-- <HalftoneMark :size="18" :opacity="0.4" color="var(--color-accent)" /> -->
         </div>
 

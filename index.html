@@ -9,6 +9,20 @@
       name="description"
       content="Logic Play — the underdog builder's club at SRM. Ship real projects, form hackathon teams, get mentored by people who've actually done it."
     />
+    <script>
+      // Set the theme attribute before first paint so there's no flash of
+      // the wrong theme. useTheme.ts reads this same attribute on init and
+      // takes over from here.
+      (function () {
+        var stored = localStorage.getItem("logicplay-theme");
+        var theme =
+          stored ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches
+            ? "light"
+            : "dark");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
     <link
       rel="preload"
       href="/src/fonts/GeistMono[wght].woff2"

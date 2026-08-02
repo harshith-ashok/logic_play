@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { gsap } from "gsap";
+import type { ScrollTrigger } from "gsap/ScrollTrigger";
 import Badge from "../components/ui/Badge.vue";
 import GridBar from "../components/ui/GridBar.vue";
 import HalftoneMark from "../components/ui/HalftoneMark.vue";
@@ -14,23 +15,48 @@ import smallWhite from "../assets/transparent/small_white.png";
 const hero = ref<HTMLElement | null>(null);
 const perksSection = ref<HTMLElement | null>(null);
 const domainsSection = ref<HTMLElement | null>(null);
+const marqueeTrack = ref<HTMLElement | null>(null);
 const teamSection = ref<HTMLElement | null>(null);
 const joinSection = ref<HTMLElement | null>(null);
 
 useScrollReveal(perksSection, { selector: ".perk-card" });
-useScrollReveal(domainsSection, { selector: ".domain-tag", stagger: 0.04 });
 useScrollReveal(teamSection, { selector: ".team-card" });
 useScrollReveal(joinSection);
 
 const pad = (n: number) => String(n).padStart(2, "0");
+// Repeated so the track is comfortably wider than the viewport — the whole
+// point of a scroll-linked marquee is having room to pan through.
+const marqueeDomains = [...domains, ...domains];
+
+let marqueeTrigger: ScrollTrigger | null = null;
 
 onMounted(() => {
-  if (!hero.value) return;
-  gsap.fromTo(
-    hero.value.querySelectorAll(".hero-punch"),
-    { y: 24, opacity: 0 },
-    { y: 0, opacity: 1, duration: 0.7, stagger: 0.1, ease: "power3.out" },
-  );
+  if (hero.value) {
+    gsap.fromTo(
+      hero.value.querySelectorAll(".hero-punch"),
+      { y: 24, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, stagger: 0.1, ease: "power3.out" },
+    );
+  }
+
+  if (marqueeTrack.value && domainsSection.value) {
+    const track = marqueeTrack.value;
+    const tween = gsap.to(track, {
+      x: () => -(track.scrollWidth - track.parentElement!.clientWidth),
+      ease: "none",
+      scrollTrigger: {
+        trigger: domainsSection.value,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: 0.6,
+      },
+    });
+    marqueeTrigger = tween.scrollTrigger ?? null;
+  }
+});
+
+onUnmounted(() => {
+  marqueeTrigger?.kill();
 });
 </script>
 
@@ -54,7 +80,7 @@ onMounted(() => {
         :src="smallWhite"
         alt=""
         aria-hidden="true"
-        class="pointer-events-none absolute right-0 top-1/2 h-105 w-auto -translate-y-1/2 translate-x-1/4 opacity-[0.06]"
+        class="brand-mark pointer-events-none absolute right-0 top-1/2 h-105 w-auto -translate-y-1/2 translate-x-1/4 opacity-[0.06]"
       />
 
       <div class="relative mx-auto flex w-full max-w-6xl flex-col gap-8">
@@ -80,7 +106,7 @@ onMounted(() => {
             <img
               :src="smallWhite"
               alt=""
-              class="h-4 w-auto"
+              class="brand-mark h-4 w-auto"
               aria-hidden="true"
             />
             <span>Student Builders Club</span>
@@ -179,20 +205,25 @@ onMounted(() => {
     <!-- Focus areas (from club brief) -->
     <section
       ref="domainsSection"
-      class="cursor-glow-bg relative overflow-hidden bg-bg-elevated px-4 py-20 sm:px-6"
+      class="cursor-glow-bg relative overflow-hidden bg-bg-elevated py-20"
     >
-      <div class="relative mx-auto max-w-6xl">
+      <div class="relative mx-auto flex justify-center max-w-6xl px-4 sm:px-6">
         <h2
-          class="mb-8 font-display text-3xl uppercase tracking-tight sm:text-4xl"
+          class="mb-8 text-center font-display text-3xl uppercase tracking-tight sm:text-4xl"
         >
           Focus Areas
         </h2>
-        <div class="flex flex-wrap gap-4">
+      </div>
+      <div class="relative overflow-hidden pt-6 sm:pt-8">
+        <div
+          ref="marqueeTrack"
+          class="flex w-max flex-nowrap gap-4 px-4 sm:px-6"
+        >
           <Badge
-            v-for="domain in domains"
-            :key="domain"
-            size="md"
-            class="domain-tag normal-case"
+            v-for="(domain, i) in marqueeDomains"
+            :key="`${domain}-${i}`"
+            size="lg"
+            class="domain-tag shrink-0 whitespace-nowrap normal-case text-2xl! sm:text-3xl!"
           >
             {{ domain }}
           </Badge>
