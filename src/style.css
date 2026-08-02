@@ -1,39 +1,46 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./fonts/GeistMono[wght].woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("./fonts/GeistMono-Italic[wght].woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 @theme {
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Surfaces */
+  --color-bg: #08090b;
+  --color-bg-elevated: #101114;
+  --color-fg: #ffffff;
 
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-hover: var(--surface-hover);
-  --color-border: var(--border);
-  --color-border-hover: var(--border-hover);
-  --color-text: var(--text);
-  --color-muted: var(--muted);
-  --color-accent-blue: #3b82f6;
-  --color-accent-violet: #8b5cf6;
-}
+  /* Foreground opacity steps, exposed as first-class colors so `text-fg-muted`
+     etc. work without remembering an opacity value at every call site. */
+  --color-fg-muted: rgba(255, 255, 255, 0.62);
+  --color-fg-subtle: rgba(255, 255, 255, 0.4);
 
-[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #09090b;
-  --surface: #111113;
-  --surface-hover: #17171a;
-  --border: #232326;
-  --border-hover: #34343a;
-  --text: #f4f4f5;
-  --muted: #8e8e96;
-}
+  /* Glass surfaces + borders — the one recipe reused everywhere via Badge.vue */
+  --color-glass: rgba(255, 255, 255, 0.06);
+  --color-glass-hover: rgba(255, 255, 255, 0.1);
+  --color-border: rgba(255, 255, 255, 0.14);
+  --color-border-strong: rgba(255, 255, 255, 0.24);
 
-[data-theme="light"] {
-  color-scheme: light;
-  --bg: #ffffff;
-  --surface: #f5f5f6;
-  --surface-hover: #ececef;
-  --border: #e2e2e5;
-  --border-hover: #cfcfd4;
-  --text: #09090b;
-  --muted: #63636b;
+  /* Cinematic red accent — glow only, never a flat fill */
+  --color-accent: #ff3b3b;
+  --color-accent-soft: rgba(255, 59, 59, 0.35);
+
+  --font-display: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --ease-mechanical: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 html {
@@ -41,30 +48,93 @@ html {
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: var(--font-mono);
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
 }
 
-body,
-body * {
-  transition: background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+/* Reusable glass surface recipe — Badge.vue's `glass` tone is the only
+   consumer; kept here as the single definition so the blur/border pairing
+   never drifts between components. Deliberately never sets `position` or
+   `overflow` — those stay Tailwind-utility territory on each consumer so
+   this class can't fight `fixed`/`relative` utilities for the cascade. */
+.glass-surface {
+  isolation: isolate; /* own stacking context, so ::before's z-index:-1 below sits above our bg but below slotted content, with no template changes needed */
+  background-color: var(--color-glass);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Cursor-tracked spotlight, driven by --mx/--my set from useCursorGlow.ts.
+   Consumers must be `position: relative; overflow: hidden` (added as
+   Tailwind utilities per-element) so this anchors and clips correctly. */
+.glass-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    160px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.08),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-mechanical);
+  pointer-events: none;
+}
+.glass-surface:hover::before {
+  opacity: 1;
+}
+
+/* Same cursor-tracked idea, scaled up and tinted red for full-bleed
+   backgrounds (the hero) instead of individual glass pills/cards — driven
+   by the same --mx/--my custom properties via useCursorGlow.ts. */
+.cursor-glow-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    600px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 59, 59, 0.1),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-mechanical);
+  pointer-events: none;
+}
+.cursor-glow-bg:hover::before {
+  opacity: 1;
+}
+
+/* Fine 1px grid lines for the crosshair/grid motif (GridBar.vue background,
+   hero backdrop). Generated, not a raster asset. */
+.bg-grid-lines {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Subtle printed-sticker grain over dark sections. Kept as a CSS gradient
+   noise so it stays crisp at any resolution instead of a raster PNG. */
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: radial-gradient(
+      circle at 1px 1px,
+      #ffffff 1px,
+      transparent 0
+    );
+  background-size: 3px 3px;
 }
 
 ::selection {
-  background-color: var(--color-accent-blue);
-  color: #ffffff;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 999px;
+  background: var(--color-accent);
+  color: var(--color-fg);
 }

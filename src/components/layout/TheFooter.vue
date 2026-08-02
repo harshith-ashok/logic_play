@@ -1,60 +1,60 @@
 <script setup lang="ts">
+import Badge from "../ui/Badge.vue";
+import GridBar from "../ui/GridBar.vue";
+import HalftoneMark from "../ui/HalftoneMark.vue";
+import smallWhite from "../../assets/transparent/small_white.png";
+
 const links = [
-  { label: "About", href: "#about" },
-  { label: "Domains", href: "#domains" },
-  { label: "Projects", href: "#projects" },
-  { label: "Timeline", href: "#timeline" },
-  { label: "Team", href: "#team" },
+  { to: "/gallery", label: "Gallery" },
+  { to: "/events", label: "Events" },
+  { to: "/press", label: "Press" },
+  { to: "/team", label: "Team" },
 ];
 
-const social = [
-  { label: "GitHub", href: "#" },
+// TBA: swap in real handles once socials exist.
+const socials = [
+  { label: "Instagram", href: "#" },
+  { label: "Discord", href: "#" },
   { label: "LinkedIn", href: "#" },
-  { label: "X", href: "#" },
-  { label: "Mail", href: "#" },
 ];
 </script>
 
 <template>
-  <footer class="border-t border-border px-6 py-16">
-    <div class="mx-auto flex max-w-6xl flex-col gap-12 lg:flex-row lg:justify-between">
-      <div class="max-w-xs">
-        <a href="#" class="text-sm font-medium tracking-tight text-text">
-          logic<span class="text-accent-blue">_</span>play
-        </a>
-        <p class="mt-4 text-sm leading-relaxed text-muted">
-          A student-run technical club for people who build, break, learn, and repeat.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-2 gap-12 sm:grid-cols-3">
-        <div>
-          <h4 class="text-xs uppercase tracking-[0.15em] text-muted">Sections</h4>
-          <ul class="mt-4 flex flex-col gap-3">
-            <li v-for="link in links" :key="link.href">
-              <a :href="link.href" class="text-sm text-muted transition-colors duration-200 hover:text-text">
-                {{ link.label }}
-              </a>
-            </li>
-          </ul>
+  <footer class="relative">
+    <GridBar />
+    <div class="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12 sm:px-6">
+      <div class="flex flex-col items-start justify-between gap-8 sm:flex-row">
+        <div class="flex items-center gap-3">
+          <img :src="smallWhite" alt="Logic Play" class="h-9 w-auto" />
+          <HalftoneMark :size="18" :opacity="0.4" color="var(--color-accent)" />
         </div>
 
-        <div>
-          <h4 class="text-xs uppercase tracking-[0.15em] text-muted">Connect</h4>
-          <ul class="mt-4 flex flex-col gap-3">
-            <li v-for="item in social" :key="item.label">
-              <a :href="item.href" class="text-sm text-muted transition-colors duration-200 hover:text-text">
-                {{ item.label }}
-              </a>
-            </li>
-          </ul>
+        <nav class="flex flex-wrap gap-2">
+          <Badge v-for="link in links" :key="link.to" :to="link.to" size="sm" interactive>
+            {{ link.label }}
+          </Badge>
+        </nav>
+
+        <div class="flex flex-wrap gap-2">
+          <Badge
+            v-for="social in socials"
+            :key="social.label"
+            as="a"
+            :href="social.href"
+            size="sm"
+            interactive
+          >
+            {{ social.label }}
+          </Badge>
         </div>
       </div>
-    </div>
 
-    <div class="mx-auto mt-16 flex max-w-6xl flex-col gap-4 border-t border-border pt-8 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-      <p>© {{ new Date().getFullYear() }} Logic Play. All rights reserved.</p>
-      <p>Built by the club, for the club.</p>
+      <div
+        class="flex flex-col gap-2 border-t border-border pt-6 font-sans text-xs text-fg-subtle sm:flex-row sm:items-center sm:justify-between"
+      >
+        <p>&copy; {{ new Date().getFullYear() }} Logic Play. All rights reserved.</p>
+        <p>Built by people who ship.</p>
+      </div>
     </div>
   </footer>
 </template>

@@ -1,31 +1,32 @@
 <script setup lang="ts">
-import AppLoader from "@/components/ui/AppLoader.vue";
-import TheNavbar from "@/components/layout/TheNavbar.vue";
-import TheFooter from "@/components/layout/TheFooter.vue";
-import HeroSection from "@/components/sections/HeroSection.vue";
-import AboutSection from "@/components/sections/AboutSection.vue";
-import DomainsSection from "@/components/sections/DomainsSection.vue";
-import ProjectsSection from "@/components/sections/ProjectsSection.vue";
-import TimelineSection from "@/components/sections/TimelineSection.vue";
-import StatsSection from "@/components/sections/StatsSection.vue";
-import TeamSection from "@/components/sections/TeamSection.vue";
-import { Analytics } from "@vercel/analytics/vue";
+import TheNavbar from "./components/layout/TheNavbar.vue";
+import TheFooter from "./components/layout/TheFooter.vue";
+import { useCursorGlow } from "./composables/useCursorGlow";
+
+useCursorGlow();
 </script>
 
 <template>
-  <div class="min-h-screen bg-bg text-text">
-    <AppLoader />
+  <div class="relative flex min-h-screen flex-col bg-bg text-fg">
     <TheNavbar />
-    <Analytics />
-    <main>
-      <HeroSection />
-      <AboutSection />
-      <DomainsSection />
-      <ProjectsSection />
-      <TimelineSection />
-      <StatsSection />
-      <TeamSection />
+    <main class="flex-1 pt-16">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </main>
     <TheFooter />
   </div>
 </template>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s var(--ease-mechanical);
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
