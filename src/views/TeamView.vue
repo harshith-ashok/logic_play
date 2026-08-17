@@ -12,7 +12,9 @@ useScrollReveal(grid, { selector: ".team-card" });
 <template>
   <div class="px-4 py-28 sm:px-6">
     <div class="mx-auto max-w-6xl">
-      <h1 class="mb-4 font-display text-3xl uppercase tracking-tight sm:text-5xl">
+      <h1
+        class="mb-4 font-display text-3xl uppercase tracking-tight sm:text-5xl"
+      >
         Team
       </h1>
       <p class="mb-12 max-w-xl font-sans text-sm text-fg-muted">
