@@ -5,7 +5,7 @@ import GridBar from "../components/ui/GridBar.vue";
 import HalftoneMark from "../components/ui/HalftoneMark.vue";
 import { useScrollReveal } from "../composables/useScrollReveal";
 import { joinDomains } from "../data/joinDomains";
-import { supabase, getSupabase } from "../lib/supabase";
+import { getSupabase } from "../lib/supabase";
 
 const section = ref<HTMLElement | null>(null);
 useScrollReveal(section, { selector: ".join-block" });
