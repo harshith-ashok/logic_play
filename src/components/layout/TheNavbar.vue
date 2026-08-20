@@ -25,7 +25,11 @@ const open = ref(false);
       class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6"
     >
       <router-link to="/" class="flex items-center gap-2" @click="open = false">
-        <img :src="smallWhite" alt="Logic Play" class="brand-mark h-8 w-auto sm:h-8" />
+        <img
+          :src="smallWhite"
+          alt="Logic Play"
+          class="brand-mark h-8 w-auto sm:h-8"
+        />
       </router-link>
 
       <ul class="hidden items-center gap-2 md:flex">
@@ -40,7 +44,13 @@ const open = ref(false);
         <ThemeToggle />
 
         <div class="hidden md:block">
-          <Badge to="/join" tone="solid" size="sm" interactive arrow>
+          <Badge
+            href="https://forms.gle/9qTSZTSg7mwfqDRx6"
+            tone="solid"
+            size="sm"
+            interactive
+            arrow
+          >
             Join the Club
           </Badge>
         </div>
@@ -82,7 +92,7 @@ const open = ref(false);
         </li>
         <li>
           <Badge
-            to="/join"
+            href="https://forms.gle/9qTSZTSg7mwfqDRx6"
             tone="solid"
             size="sm"
             interactive

@@ -5,7 +5,7 @@ import GridBar from "../components/ui/GridBar.vue";
 import HalftoneMark from "../components/ui/HalftoneMark.vue";
 import { useScrollReveal } from "../composables/useScrollReveal";
 import { joinDomains } from "../data/joinDomains";
-import { supabase } from "../lib/supabase";
+import { supabase, getSupabase } from "../lib/supabase";
 
 const section = ref<HTMLElement | null>(null);
 useScrollReveal(section, { selector: ".join-block" });
@@ -67,8 +67,15 @@ async function handleSubmit() {
 
   status.value = "submitting";
   errorMessage.value = "";
+  const client = getSupabase();
+  if (!client) {
+    status.value = "error";
+    errorMessage.value =
+      "Server configuration error: missing Supabase environment variables. Please contact the site administrator.";
+    return;
+  }
 
-  const { error } = await supabase.from("club_recruitments").insert({
+  const { error } = await client.from("club_recruitments").insert({
     name: form.name.trim(),
     registration_number: form.registration_number.trim(),
     phone_number: form.phone_number.trim(),

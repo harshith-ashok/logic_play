@@ -8,5 +8,5 @@ export interface Announcement {
 // here whenever there's club news — no other file needs to change.
 export const announcement: Announcement | null = {
   text: "Recruiting is open for our first batch of members.",
-  link: "#join",
+  link: "https://forms.gle/9qTSZTSg7mwfqDRx6",
 };

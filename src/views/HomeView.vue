@@ -152,7 +152,13 @@ onUnmounted(() => {
         </div>
 
         <div class="hero-punch">
-          <Badge to="/join" tone="solid" size="lg" interactive arrow>
+          <Badge
+            href="https://forms.gle/9qTSZTSg7mwfqDRx6"
+            tone="solid"
+            size="lg"
+            interactive
+            arrow
+          >
             Join the Club
           </Badge>
         </div>
@@ -290,11 +296,16 @@ onUnmounted(() => {
           Ready to build?
         </h2>
         <p class="font-sans text-sm text-fg-muted">
-          Tell us what you build. Applications are reviewed on a rolling
-          basis.
+          Tell us what you build. Applications are reviewed on a rolling basis.
         </p>
         <div class="flex flex-wrap justify-center gap-3">
-          <Badge to="/join" tone="solid" size="lg" interactive arrow>
+          <Badge
+            href="https://forms.gle/9qTSZTSg7mwfqDRx6"
+            tone="solid"
+            size="lg"
+            interactive
+            arrow
+          >
             Apply to Join
           </Badge>
           <!-- <Badge as="a" href="#" size="lg" interactive>
