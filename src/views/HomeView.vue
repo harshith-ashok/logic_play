@@ -152,7 +152,7 @@ onUnmounted(() => {
         </div>
 
         <div class="hero-punch">
-          <Badge as="a" href="#join" tone="solid" size="lg" interactive arrow>
+          <Badge to="/join" tone="solid" size="lg" interactive arrow>
             Join the Club
           </Badge>
         </div>
@@ -290,11 +290,11 @@ onUnmounted(() => {
           Ready to build?
         </h2>
         <p class="font-sans text-sm text-fg-muted">
-          Applications open soon. Drop into the Discord to get pinged the moment
-          they do.
+          Tell us what you build. Applications are reviewed on a rolling
+          basis.
         </p>
         <div class="flex flex-wrap justify-center gap-3">
-          <Badge as="a" href="#" tone="solid" size="lg" interactive arrow>
+          <Badge to="/join" tone="solid" size="lg" interactive arrow>
             Apply to Join
           </Badge>
           <!-- <Badge as="a" href="#" size="lg" interactive>

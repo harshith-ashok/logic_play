@@ -1,0 +1,261 @@
+- generic [ref=e2]:
+  - img "Logic Play" [ref=e4]
+  - generic [ref=e5]:
+    - banner [ref=e6]:
+      - generic [ref=e8]:
+        - generic [ref=e9]: +
+        - generic [ref=e10]: +
+        - generic [ref=e11]: +
+        - generic [ref=e12]: +
+        - generic [ref=e13]: +
+        - generic [ref=e14]: +
+        - generic [ref=e15]: +
+        - generic [ref=e16]: +
+        - generic [ref=e17]: +
+        - generic [ref=e18]: +
+        - generic [ref=e19]: +
+        - generic [ref=e20]: +
+        - generic [ref=e21]: +
+        - generic [ref=e22]: +
+        - generic [ref=e23]: +
+        - generic [ref=e24]: +
+      - navigation [ref=e25]:
+        - link [ref=e26] [cursor=pointer]:
+          - /url: /
+          - img "Logic Play" [ref=e27]
+        - list [ref=e28]:
+          - listitem [ref=e29]:
+            - generic [ref=e30] [cursor=pointer]: Home
+          - listitem [ref=e31]:
+            - generic [ref=e32] [cursor=pointer]: Gallery
+          - listitem [ref=e33]:
+            - generic [ref=e34] [cursor=pointer]: Events
+          - listitem [ref=e35]:
+            - generic [ref=e36] [cursor=pointer]: Team
+        - generic [ref=e37]:
+          - button "Switch to dark mode" [ref=e38]
+          - link "Join the Club" [ref=e42] [cursor=pointer]:
+            - /url: "#join"
+            - text: Join the Club
+            - generic [ref=e43]: →
+    - main [ref=e44]:
+      - generic [ref=e45]:
+        - generic [ref=e47]:
+          - link "News Recruiting is open for our first batch of members." [ref=e48] [cursor=pointer]:
+            - /url: "#join"
+            - generic [ref=e49]: News
+            - generic [ref=e50]: Recruiting is open for our first batch of members.
+            - generic [ref=e51]: →
+          - generic [ref=e52]:
+            - generic [ref=e53]: Student Builders Club
+            - generic [ref=e56]: Hacking Since 2014
+          - heading "Stop Consuming Technology. Start Building It." [level=1] [ref=e59]:
+            - generic [ref=e60]: Stop Consuming
+            - generic [ref=e61]: Technology.
+            - generic [ref=e62]: Start Building It.
+          - paragraph [ref=e63]: Logic Play is SRM's AI-focused builder's club — real projects, real hackathons, real mentors. Not another resume line.
+          - generic [ref=e64]:
+            - generic [ref=e65]: 01 / Hands-on Projects
+            - generic [ref=e66]: 02 / Hackathons
+            - generic [ref=e67]: 03 / Workshops
+          - link "Join the Club" [ref=e69] [cursor=pointer]:
+            - /url: "#join"
+            - text: Join the Club
+            - generic [ref=e70]: →
+        - generic [ref=e72]:
+          - generic [ref=e73]: +
+          - generic [ref=e74]: +
+          - generic [ref=e75]: +
+          - generic [ref=e76]: +
+          - generic [ref=e77]: +
+          - generic [ref=e78]: +
+          - generic [ref=e79]: +
+          - generic [ref=e80]: +
+          - generic [ref=e81]: +
+          - generic [ref=e82]: +
+          - generic [ref=e83]: +
+          - generic [ref=e84]: +
+          - generic [ref=e85]: +
+          - generic [ref=e86]: +
+          - generic [ref=e87]: +
+          - generic [ref=e88]: +
+        - generic [ref=e89]:
+          - heading "What We Do" [level=2] [ref=e91]
+          - generic [ref=e92]:
+            - generic [ref=e93]:
+              - generic [ref=e94]: 01 /
+              - generic [ref=e95]: Hands-on Projects
+              - generic [ref=e96]: Ship real builds across AI, ML, and software — not toy assignments.
+            - generic [ref=e97]:
+              - generic [ref=e98]: 02 /
+              - generic [ref=e99]: Hackathons
+              - generic [ref=e100]: Form teams, compete, and take home more than a t-shirt.
+            - generic [ref=e101]:
+              - generic [ref=e102]: 03 /
+              - generic [ref=e103]: Workshops
+              - generic [ref=e104]: Bootcamps and sessions run by people who actually use this stuff.
+            - generic [ref=e105]:
+              - generic [ref=e106]: 04 /
+              - generic [ref=e107]: Mentorship
+              - generic [ref=e108]: Get paired with leads who've shipped, published, and shipped again.
+            - generic [ref=e109]:
+              - generic [ref=e110]: 05 /
+              - generic [ref=e111]: Portfolio Growth
+              - generic [ref=e112]: Papers, patents, projects — build a track record, not just a resume line.
+        - generic [ref=e114]:
+          - generic [ref=e115]: +
+          - generic [ref=e116]: +
+          - generic [ref=e117]: +
+          - generic [ref=e118]: +
+          - generic [ref=e119]: +
+          - generic [ref=e120]: +
+          - generic [ref=e121]: +
+          - generic [ref=e122]: +
+          - generic [ref=e123]: +
+          - generic [ref=e124]: +
+          - generic [ref=e125]: +
+          - generic [ref=e126]: +
+          - generic [ref=e127]: +
+          - generic [ref=e128]: +
+          - generic [ref=e129]: +
+          - generic [ref=e130]: +
+        - generic [ref=e131]:
+          - heading "Focus Areas" [level=2] [ref=e133]
+          - generic [ref=e135]:
+            - generic [ref=e136]: Artificial Intelligence
+            - generic [ref=e137]: Machine Learning
+            - generic [ref=e138]: Deep Learning
+            - generic [ref=e139]: Generative AI
+            - generic [ref=e140]: Computer Vision
+            - generic [ref=e141]: Natural Language Processing
+            - generic [ref=e142]: Robotics
+            - generic [ref=e143]: IoT
+            - generic [ref=e144]: Data Science
+            - generic [ref=e145]: Artificial Intelligence
+            - generic [ref=e146]: Machine Learning
+            - generic [ref=e147]: Deep Learning
+            - generic [ref=e148]: Generative AI
+            - generic [ref=e149]: Computer Vision
+            - generic [ref=e150]: Natural Language Processing
+            - generic [ref=e151]: Robotics
+            - generic [ref=e152]: IoT
+            - generic [ref=e153]: Data Science
+        - generic [ref=e155]:
+          - generic [ref=e156]: +
+          - generic [ref=e157]: +
+          - generic [ref=e158]: +
+          - generic [ref=e159]: +
+          - generic [ref=e160]: +
+          - generic [ref=e161]: +
+          - generic [ref=e162]: +
+          - generic [ref=e163]: +
+          - generic [ref=e164]: +
+          - generic [ref=e165]: +
+          - generic [ref=e166]: +
+          - generic [ref=e167]: +
+          - generic [ref=e168]: +
+          - generic [ref=e169]: +
+          - generic [ref=e170]: +
+          - generic [ref=e171]: +
+        - generic [ref=e173]:
+          - generic [ref=e174]:
+            - heading "Team" [level=2] [ref=e175]
+            - generic [ref=e176] [cursor=pointer]:
+              - text: Full Team
+              - generic [ref=e177]: →
+          - generic [ref=e178]:
+            - generic [ref=e179]:
+              - generic [ref=e202]: Tharun
+              - generic [ref=e203]: President
+              - generic [ref=e204]: Vision and club direction
+            - generic [ref=e205]:
+              - generic [ref=e228]: Harshith Ashok
+              - generic [ref=e229]: Vice-President
+              - generic [ref=e230]: Everything technical
+            - generic [ref=e231]:
+              - generic [ref=e254]: Vakulabhushan NJ
+              - generic [ref=e255]: General Secretary
+              - generic [ref=e256]: Operations and outreach
+            - generic [ref=e257]:
+              - generic [ref=e280]: Kshama
+              - generic [ref=e281]: Marketing Head
+              - generic [ref=e282]: Comms, brand presence, outreach
+            - generic [ref=e283]:
+              - generic [ref=e306]: Manoj Kanna
+              - generic [ref=e307]: Technical Head
+              - generic [ref=e308]: Projects and mentorship
+            - generic [ref=e309]:
+              - generic [ref=e332]: Archita
+              - generic [ref=e333]: Design Lead
+              - generic [ref=e334]: Design and branding
+            - generic [ref=e335]:
+              - generic [ref=e358]: Srinideesh
+              - generic [ref=e359]: Development Lead
+              - generic [ref=e360]: Web and app development
+            - generic [ref=e361]:
+              - generic [ref=e384]: Priyanga
+              - generic [ref=e385]: External Affairs
+              - generic [ref=e386]: Partnerships and press
+            - generic [ref=e387]:
+              - generic [ref=e410]: Krishnan
+              - generic [ref=e411]: PR Lead
+              - generic [ref=e412]: Public relations and media outreach
+        - generic [ref=e414]:
+          - generic [ref=e415]: +
+          - generic [ref=e416]: +
+          - generic [ref=e417]: +
+          - generic [ref=e418]: +
+          - generic [ref=e419]: +
+          - generic [ref=e420]: +
+          - generic [ref=e421]: +
+          - generic [ref=e422]: +
+          - generic [ref=e423]: +
+          - generic [ref=e424]: +
+          - generic [ref=e425]: +
+          - generic [ref=e426]: +
+          - generic [ref=e427]: +
+          - generic [ref=e428]: +
+          - generic [ref=e429]: +
+          - generic [ref=e430]: +
+        - generic [ref=e432]:
+          - heading "Ready to build?" [level=2] [ref=e433]
+          - paragraph [ref=e434]: Applications open soon. Drop into the Discord to get pinged the moment they do.
+          - link "Apply to Join" [ref=e436] [cursor=pointer]:
+            - /url: "#"
+            - text: Apply to Join
+            - generic [ref=e437]: →
+    - contentinfo [ref=e438]:
+      - generic [ref=e440]:
+        - generic [ref=e441]: +
+        - generic [ref=e442]: +
+        - generic [ref=e443]: +
+        - generic [ref=e444]: +
+        - generic [ref=e445]: +
+        - generic [ref=e446]: +
+        - generic [ref=e447]: +
+        - generic [ref=e448]: +
+        - generic [ref=e449]: +
+        - generic [ref=e450]: +
+        - generic [ref=e451]: +
+        - generic [ref=e452]: +
+        - generic [ref=e453]: +
+        - generic [ref=e454]: +
+        - generic [ref=e455]: +
+        - generic [ref=e456]: +
+      - generic [ref=e457]:
+        - generic [ref=e458]:
+          - img "Logic Play" [ref=e460]
+          - navigation [ref=e461]:
+            - generic [ref=e462] [cursor=pointer]: Gallery
+            - generic [ref=e463] [cursor=pointer]: Events
+            - generic [ref=e464] [cursor=pointer]: Team
+          - generic [ref=e465]:
+            - link "Instagram" [ref=e466] [cursor=pointer]:
+              - /url: "#"
+            - link "Discord" [ref=e467] [cursor=pointer]:
+              - /url: "#"
+            - link "LinkedIn" [ref=e468] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=e469]:
+          - paragraph [ref=e470]: © 2026 Logic Play. All rights reserved.
+          - paragraph [ref=e471]: Built by people who ship.

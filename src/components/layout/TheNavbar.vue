@@ -40,7 +40,7 @@ const open = ref(false);
         <ThemeToggle />
 
         <div class="hidden md:block">
-          <Badge as="a" href="#join" tone="solid" size="sm" interactive arrow>
+          <Badge to="/join" tone="solid" size="sm" interactive arrow>
             Join the Club
           </Badge>
         </div>
@@ -82,8 +82,7 @@ const open = ref(false);
         </li>
         <li>
           <Badge
-            as="a"
-            href="#join"
+            to="/join"
             tone="solid"
             size="sm"
             interactive
