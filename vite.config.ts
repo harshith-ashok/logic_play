@@ -2,19 +2,25 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 
-// Absolute site origin for canonical/OG tags and robots.txt. Set VITE_SITE_URL
-// to override (e.g. a custom domain); on Vercel it falls back to the production
-// domain, and locally to the dev server. (sitemap.xml is served by api/sitemap.ts
-// so it can include blog posts.)
-const siteUrl = (
-  process.env.VITE_SITE_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "http://localhost:5173")
-).replace(/\/$/, "");
-process.env.VITE_SITE_URL = siteUrl;
+// Absolute site origin for OG/JSON-LD tags and robots.txt. Resolution order:
+// VITE_SITE_URL (env var or .env file, e.g. a custom domain) -> Vercel's
+// production domain (set automatically on Vercel builds) -> the local dev
+// server. (sitemap.xml is served by api/sitemap.ts so it can include posts.)
+function resolveSiteUrl(mode: string): string {
+  const env = { ...loadEnv(mode, process.cwd(), ""), ...process.env };
+  const url =
+    env.VITE_SITE_URL ||
+    (env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}` : "");
+  if (!url && env.VERCEL) {
+    console.warn(
+      "\n[seo] No site URL on a Vercel build. Set VITE_SITE_URL, or enable " +
+        '"Automatically expose System Environment Variables" in Vercel project settings.\n',
+    );
+  }
+  return (url || "http://localhost:5173").replace(/\/$/, "");
+}
 
-function robotsTxt(): Plugin {
+function robotsTxt(siteUrl: string): Plugin {
   return {
     name: "robots-txt",
     generateBundle() {
@@ -31,7 +37,6 @@ function robotsTxt(): Plugin {
           "Disallow: /blog/write",
           "Disallow: /blog/edit/",
           "Disallow: /blog/dashboard",
-          "Disallow: /api/",
           "",
           `Sitemap: ${siteUrl}/sitemap.xml`,
           "",
@@ -95,6 +100,9 @@ function devApi(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [vue(), tailwindcss(), robotsTxt(), devApi()],
+export default defineConfig(({ mode }) => {
+  const siteUrl = resolveSiteUrl(mode);
+  // index.html reads this as %VITE_SITE_URL%.
+  process.env.VITE_SITE_URL = siteUrl;
+  return { plugins: [vue(), tailwindcss(), robotsTxt(siteUrl), devApi()] };
 });

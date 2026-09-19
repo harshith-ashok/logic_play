@@ -10,7 +10,10 @@ import { loadPost } from "../_lib/posts.js";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const slug = url.searchParams.get("slug") ?? "";
-  const shellRes = await fetch(new URL("/index.html", url.origin));
+  // The built SPA shell. If it can't be fetched (e.g. a protected preview
+  // deployment), fail loudly instead of serving a broken page.
+  const shellRes = await fetch(new URL("/index.html", url.origin)).catch(() => null);
+  if (!shellRes?.ok) return new Response("Page temporarily unavailable.", { status: 503 });
   const shell = await shellRes.text();
   const headers = { "Content-Type": "text/html; charset=utf-8" };
 
