@@ -10,6 +10,7 @@ const GLOW_SELECTOR = ".glass-surface, .cursor-glow-bg";
  */
 export function useCursorGlow() {
   function handlePointerMove(e: PointerEvent) {
+    if (e.pointerType !== "mouse") return; // no hover on touch — skip the layout reads
     const target = (e.target as HTMLElement | null)?.closest<HTMLElement>(GLOW_SELECTOR);
     if (!target) return;
     const rect = target.getBoundingClientRect();

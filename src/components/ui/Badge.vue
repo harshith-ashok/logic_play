@@ -58,16 +58,16 @@ const toneClasses = computed(() =>
     :class="[
       sizeClasses,
       toneClasses,
-      !column && 'rounded-full',
+      !column && 'rounded-sm',
       column
         ? 'flex-col items-start justify-start text-left normal-case'
         : 'inline-flex items-center justify-center',
       interactive &&
         tone === 'glass' &&
-        'cursor-pointer hover:border-border-strong hover:bg-glass-hover hover:-translate-y-0.5 active:translate-y-0',
+        'cursor-pointer hover:border-border-strong hover:bg-glass-hover',
       interactive &&
         tone === 'solid' &&
-        'cursor-pointer hover:opacity-85 hover:-translate-y-0.5 active:translate-y-0',
+        'cursor-pointer hover:opacity-85',
     ]"
     :style="{ transitionTimingFunction: 'var(--ease-mechanical)' }"
   >
