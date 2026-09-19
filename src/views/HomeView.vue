@@ -1,63 +1,76 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
 import { gsap } from "gsap";
-import type { ScrollTrigger } from "gsap/ScrollTrigger";
 import Badge from "../components/ui/Badge.vue";
 import GridBar from "../components/ui/GridBar.vue";
 import HalftoneMark from "../components/ui/HalftoneMark.vue";
+import TeamCard from "../components/ui/TeamCard.vue";
 import { useScrollReveal } from "../composables/useScrollReveal";
+import { useTeamMembers } from "../composables/useTeamMembers";
+import { useSiteSettings } from "../composables/useSiteSettings";
 import { perks } from "../data/perks";
-import { domains } from "../data/domains";
-import { team } from "../data/team";
-import { announcement } from "../data/announcement";
+import { domains, type Domain } from "../data/domains";
 import smallWhite from "../assets/transparent/small_white.png";
+
+const { members } = useTeamMembers();
+const { settings } = useSiteSettings();
 
 const hero = ref<HTMLElement | null>(null);
 const perksSection = ref<HTMLElement | null>(null);
 const domainsSection = ref<HTMLElement | null>(null);
-const marqueeTrack = ref<HTMLElement | null>(null);
 const teamSection = ref<HTMLElement | null>(null);
 const joinSection = ref<HTMLElement | null>(null);
 
 useScrollReveal(perksSection, { selector: ".perk-card" });
 useScrollReveal(teamSection, { selector: ".team-card" });
 useScrollReveal(joinSection);
+useScrollReveal(domainsSection, { selector: ".domain-tag", stagger: 0.04 });
 
 const pad = (n: number) => String(n).padStart(2, "0");
-// Repeated so the track is comfortably wider than the viewport — the whole
-// point of a scroll-linked marquee is having room to pan through.
-const marqueeDomains = [...domains, ...domains];
+// Hovering (or focusing/tapping) a focus-area pill opens its popover. It is
+// positioned so it always stays inside the viewport gutter, which matters on
+// narrow phone screens where a fixed-width popover would run off the edge.
+const activeDomain = ref<Domain | null>(null);
+const popoverStyle = ref<Record<string, string>>({});
+const GUTTER = 16;
 
-let marqueeTrigger: ScrollTrigger | null = null;
+function openDomain(domain: Domain, event: Event) {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const width = Math.min(352, window.innerWidth - GUTTER * 2);
+  const left = Math.min(Math.max(rect.left, GUTTER), window.innerWidth - width - GUTTER);
+  popoverStyle.value = { width: `${width}px`, left: `${left - rect.left}px` };
+  activeDomain.value = domain;
+}
+
+// Touch has no hover-out and iOS doesn't focus tapped buttons, so tapping
+// anywhere outside the pills closes the popover.
+function closeOnOutsidePress(event: PointerEvent) {
+  if (!(event.target as HTMLElement).closest(".domain-tag")) activeDomain.value = null;
+}
 
 onMounted(() => {
-  if (hero.value) {
+  document.addEventListener("pointerdown", closeOnOutsidePress, { passive: true });
+
+  if (hero.value && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // Shorter travel and tighter stagger on phones so the entrance feels quick.
+    const mobile = window.matchMedia("(max-width: 639px)").matches;
     gsap.fromTo(
       hero.value.querySelectorAll(".hero-punch"),
-      { y: 24, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.7, stagger: 0.1, ease: "power3.out" },
+      { y: mobile ? 14 : 24, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: mobile ? 0.5 : 0.7,
+        stagger: mobile ? 0.06 : 0.1,
+        ease: "power3.out",
+        force3D: true,
+        clearProps: "transform,opacity",
+      },
     );
   }
-
-  if (marqueeTrack.value && domainsSection.value) {
-    const track = marqueeTrack.value;
-    const tween = gsap.to(track, {
-      x: () => -(track.scrollWidth - track.parentElement!.clientWidth),
-      ease: "none",
-      scrollTrigger: {
-        trigger: domainsSection.value,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: 0.6,
-      },
-    });
-    marqueeTrigger = tween.scrollTrigger ?? null;
-  }
 });
 
-onUnmounted(() => {
-  marqueeTrigger?.kill();
-});
+onUnmounted(() => document.removeEventListener("pointerdown", closeOnOutsidePress));
 </script>
 
 <template>
@@ -65,73 +78,52 @@ onUnmounted(() => {
     <!-- Hero -->
     <section
       ref="hero"
-      class="bg-grid-lines cursor-glow-bg relative flex min-h-screen flex-col justify-center overflow-hidden px-4 py-32 sm:px-6"
+      class="bg-grid-lines cursor-glow-bg relative flex min-h-svh flex-col justify-center overflow-hidden px-4 pb-16 pt-28 sm:px-6 sm:py-32"
     >
       <div
-        class="pointer-events-none absolute left-1/2 top-1/3 h-150 w-150 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-soft opacity-50 blur-[140px]"
+        class="pointer-events-none absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-soft opacity-50 blur-[90px] sm:h-150 sm:w-150 sm:blur-[140px]"
       />
       <div
-        class="pointer-events-none absolute -left-20 bottom-0 h-80 w-80 rounded-full bg-accent-soft opacity-30 blur-[100px]"
+        class="pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-accent-soft opacity-30 blur-[70px] sm:h-80 sm:w-80 sm:blur-[100px]"
       />
       <div
-        class="pointer-events-none absolute right-0 top-0 h-64 w-64 rounded-full bg-accent-soft opacity-25 blur-[90px]"
+        class="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-accent-soft opacity-25 blur-[60px] sm:h-64 sm:w-64 sm:blur-[90px]"
       />
       <img
         :src="smallWhite"
         alt=""
         aria-hidden="true"
-        class="brand-mark pointer-events-none absolute right-0 top-1/2 h-105 w-auto -translate-y-1/2 translate-x-1/4 opacity-[0.06]"
+        class="brand-mark pointer-events-none absolute right-0 top-1/2 h-56 w-auto -translate-y-1/2 translate-x-1/4 opacity-[0.06] sm:h-105"
       />
 
-      <div class="relative mx-auto flex w-full max-w-6xl flex-col gap-8">
+      <div class="relative mx-auto flex w-full max-w-6xl flex-col gap-6 sm:gap-8">
         <Badge
-          v-if="announcement"
-          :as="announcement.link ? 'a' : 'div'"
-          :href="announcement.link"
-          size="sm"
+          v-if="settings?.announcement_text"
+          :as="settings.announcement_link ? 'a' : 'div'"
+          :href="settings.announcement_link ?? undefined"
           interactive
-          class="hero-punch w-fit gap-2 border-accent!"
+          class="hero-punch w-full max-w-3xl justify-between! gap-3 border-accent! px-4! py-5! text-left sm:gap-4 sm:px-8! sm:py-7!"
         >
-          <span
-            class="rounded-full bg-accent px-1.5 py-0.5 font-display text-[10px] uppercase tracking-tight text-bg"
-          >
-            News
+          <span class="flex min-w-0 items-center gap-3 sm:gap-4">
+            <span
+              class="shrink-0 bg-accent px-2 py-1 font-display text-[10px] uppercase tracking-tight text-bg"
+            >
+              News
+            </span>
+            <span class="min-w-0 text-xs leading-snug tracking-normal sm:text-sm">
+              {{ settings.announcement_text }}
+            </span>
           </span>
-          <span>{{ announcement.text }}</span>
-          <span v-if="announcement.link" aria-hidden="true">&rarr;</span>
+          <span v-if="settings.announcement_link" class="shrink-0 text-lg" aria-hidden="true">&rarr;</span>
         </Badge>
 
-        <div class="hero-punch flex flex-wrap gap-2">
-          <Badge as="div" size="sm" class="w-fit gap-2">
-            <img
-              :src="smallWhite"
-              alt=""
-              class="brand-mark h-4 w-auto"
-              aria-hidden="true"
-            />
-            <span>Student Builders Club</span>
-          </Badge>
-          <Badge as="div" size="sm" class="w-fit gap-2 border-accent!">
-            <span
-              class="h-1.5 w-1.5 rounded-full bg-accent"
-              aria-hidden="true"
-            />
-            <span>Hacking Since 2014</span>
-          </Badge>
-        </div>
-
+        <!-- Sized in vw so the longest line (18 mono chars) fits from 320px phones up. -->
         <h1
-          class="hero-punch flex flex-col gap-0 font-display font-black uppercase leading-[0.88] tracking-tighter text-fg"
+          class="hero-punch flex flex-col font-display text-[clamp(1.5rem,8.4vw,6.5rem)] font-black uppercase leading-[0.92] tracking-tighter text-fg"
         >
-          <span class="text-5xl sm:text-7xl lg:text-9xl">Stop Consuming</span>
-          <span
-            class="self-end text-5xl text-fg-muted sm:text-7xl lg:text-9xl lg:pl-24"
-          >
-            Technology.
-          </span>
-          <span class="text-5xl sm:text-7xl lg:text-9xl"
-            >Start Building It.</span
-          >
+          <span class="whitespace-nowrap">Stop Consuming</span>
+          <span class="self-end whitespace-nowrap text-fg-muted">Technology.</span>
+          <span class="whitespace-nowrap">Start Building It.</span>
         </h1>
 
         <p
@@ -153,11 +145,12 @@ onUnmounted(() => {
 
         <div class="hero-punch">
           <Badge
-            href="https://forms.gle/9qTSZTSg7mwfqDRx6"
+            :href="settings?.join_link"
             tone="solid"
             size="lg"
             interactive
             arrow
+            class="w-full sm:w-auto"
           >
             Join the Club
           </Badge>
@@ -211,28 +204,63 @@ onUnmounted(() => {
     <!-- Focus areas (from club brief) -->
     <section
       ref="domainsSection"
-      class="cursor-glow-bg relative overflow-hidden bg-bg-elevated py-20"
+      class="cursor-glow-bg relative z-10 bg-bg-elevated px-4 py-14 sm:px-6 sm:py-20"
     >
-      <div class="relative mx-auto flex justify-center max-w-6xl px-4 sm:px-6">
-        <h2
-          class="mb-8 text-center font-display text-3xl uppercase tracking-tight sm:text-4xl"
-        >
+      <div class="relative mx-auto max-w-6xl">
+        <h2 class="mb-8 font-display text-3xl uppercase tracking-tight sm:text-4xl">
           Focus Areas
         </h2>
-      </div>
-      <div class="relative overflow-hidden pt-6 sm:pt-8">
-        <div
-          ref="marqueeTrack"
-          class="flex w-max flex-nowrap gap-4 px-4 sm:px-6"
-        >
-          <Badge
-            v-for="(domain, i) in marqueeDomains"
-            :key="`${domain}-${i}`"
-            size="lg"
-            class="domain-tag shrink-0 whitespace-nowrap normal-case text-2xl! sm:text-3xl!"
+        <div class="flex flex-wrap gap-2 sm:gap-4">
+          <div
+            v-for="domain in domains"
+            :key="domain.name"
+            class="domain-tag relative"
+            :class="activeDomain === domain && 'z-30'"
+            @mouseenter="openDomain(domain, $event)"
+            @mouseleave="activeDomain = null"
+            @focusin="openDomain(domain, $event)"
+            @focusout="activeDomain = null"
           >
-            {{ domain }}
-          </Badge>
+            <Badge
+              as="button"
+              type="button"
+              size="md"
+              interactive
+              class="px-4! py-2.5! text-xs! normal-case sm:px-5! sm:text-sm!"
+              :class="activeDomain === domain && 'border-accent!'"
+              @click="openDomain(domain, $event)"
+            >
+              {{ domain.name }}
+            </Badge>
+
+            <Transition name="domain-pop">
+              <div
+                v-if="activeDomain === domain"
+                class="absolute top-full z-30 pt-2"
+                :style="popoverStyle"
+                role="tooltip"
+              >
+                <div class="flex flex-col gap-4 border border-border-strong bg-bg p-5 text-left">
+                  <div class="flex flex-col gap-1.5">
+                    <span class="font-display text-sm uppercase tracking-tight">{{ domain.name }}</span>
+                    <span class="font-sans text-xs leading-relaxed text-fg-muted">{{ domain.summary }}</span>
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <span class="font-display text-[10px] uppercase tracking-widest text-fg-subtle">Roles</span>
+                    <ul class="flex flex-col gap-1 font-sans text-xs text-fg-muted">
+                      <li v-for="role in domain.roles" :key="role">+ {{ role }}</li>
+                    </ul>
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <span class="font-display text-[10px] uppercase tracking-widest text-fg-subtle">Projects</span>
+                    <ul class="flex flex-col gap-1 font-sans text-xs text-fg-muted">
+                      <li v-for="project in domain.projects" :key="project">+ {{ project }}</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </Transition>
+          </div>
         </div>
       </div>
     </section>
@@ -251,31 +279,7 @@ onUnmounted(() => {
           <Badge to="/team" size="sm" interactive arrow>Full Team</Badge>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Badge
-            v-for="member in team"
-            :key="member.role"
-            column
-            class="team-card gap-3"
-            :class="!member.filled && 'border-dashed border-border-strong'"
-          >
-            <HalftoneMark
-              :size="24"
-              :opacity="member.filled ? 0.9 : 0.25"
-              :color="member.filled ? 'var(--color-accent)' : 'currentColor'"
-            />
-            <span
-              class="font-display text-lg uppercase tracking-tight"
-              :class="!member.filled && 'text-fg-subtle'"
-            >
-              {{ member.name }}
-            </span>
-            <span class="font-sans text-sm tracking-normal text-fg-muted">
-              {{ member.role }}
-            </span>
-            <span class="font-sans text-xs tracking-normal text-fg-subtle">
-              {{ member.focus }}
-            </span>
-          </Badge>
+          <TeamCard v-for="member in members" :key="member.id" :member="member" />
         </div>
       </div>
     </section>
@@ -289,7 +293,7 @@ onUnmounted(() => {
       class="relative overflow-hidden px-4 py-24 text-center sm:px-6"
     >
       <div
-        class="pointer-events-none absolute left-1/2 top-1/2 h-105 w-105 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-soft opacity-30 blur-[140px]"
+        class="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-soft opacity-30 blur-[90px] sm:h-105 sm:w-105 sm:blur-[140px]"
       />
       <div class="relative mx-auto flex max-w-2xl flex-col items-center gap-6">
         <h2 class="font-display text-3xl uppercase tracking-tight sm:text-5xl">
@@ -300,7 +304,7 @@ onUnmounted(() => {
         </p>
         <div class="flex flex-wrap justify-center gap-3">
           <Badge
-            href="https://forms.gle/9qTSZTSg7mwfqDRx6"
+            :href="settings?.join_link"
             tone="solid"
             size="lg"
             interactive
@@ -316,3 +320,17 @@ onUnmounted(() => {
     </section>
   </div>
 </template>
+
+<style scoped>
+.domain-pop-enter-active,
+.domain-pop-leave-active {
+  transition:
+    opacity 0.15s var(--ease-mechanical),
+    transform 0.15s var(--ease-mechanical);
+}
+.domain-pop-enter-from,
+.domain-pop-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+</style>
