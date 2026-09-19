@@ -28,7 +28,7 @@ const placeholderCount = Math.max(6 - galleryItems.length, 3);
         <div
           v-for="item in galleryItems"
           :key="item.id"
-          class="glass-surface gallery-tile relative aspect-square overflow-hidden rounded-2xl"
+          class="glass-surface gallery-tile group relative aspect-square overflow-hidden rounded-2xl"
         >
           <img
             :src="item.image"
@@ -36,7 +36,8 @@ const placeholderCount = Math.max(6 - galleryItems.length, 3);
             loading="lazy"
             width="400"
             height="400"
-            class="h-full w-full object-cover"
+            class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            :style="{ transitionTimingFunction: 'var(--ease-mechanical)' }"
           />
           <div
             v-if="item.title || item.date"

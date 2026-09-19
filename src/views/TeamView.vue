@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import Badge from "../components/ui/Badge.vue";
-import HalftoneMark from "../components/ui/HalftoneMark.vue";
+import TeamCard from "../components/ui/TeamCard.vue";
 import { useScrollReveal } from "../composables/useScrollReveal";
-import { team } from "../data/team";
+import { useTeamMembers } from "../composables/useTeamMembers";
+
+const { members, loading, error } = useTeamMembers();
 
 const grid = ref<HTMLElement | null>(null);
 useScrollReveal(grid, { selector: ".team-card" });
@@ -21,32 +22,15 @@ useScrollReveal(grid, { selector: ".team-card" });
         The leads building Logic Play. Recruiting for open roles is ongoing.
       </p>
 
-      <div ref="grid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Badge
-          v-for="member in team"
-          :key="member.role"
-          column
-          class="team-card gap-3"
-          :class="!member.filled && 'border-dashed border-border-strong'"
-        >
-          <HalftoneMark
-            :size="24"
-            :opacity="member.filled ? 0.9 : 0.25"
-            :color="member.filled ? 'var(--color-accent)' : 'currentColor'"
-          />
-          <span
-            class="font-display text-lg uppercase tracking-tight"
-            :class="!member.filled && 'text-fg-subtle'"
-          >
-            {{ member.name }}
-          </span>
-          <span class="font-sans text-sm tracking-normal text-fg-muted">
-            {{ member.role }}
-          </span>
-          <span class="font-sans text-xs tracking-normal text-fg-subtle">
-            {{ member.focus }}
-          </span>
-        </Badge>
+      <p v-if="loading" class="font-display text-xs uppercase tracking-tight text-fg-subtle">
+        Loading&hellip;
+      </p>
+      <p v-else-if="error" class="font-display text-xs uppercase tracking-tight text-fg-subtle">
+        {{ error }}
+      </p>
+
+      <div v-else ref="grid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <TeamCard v-for="member in members" :key="member.id" :member="member" />
       </div>
     </div>
   </div>

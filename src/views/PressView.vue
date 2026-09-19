@@ -76,8 +76,8 @@ useScrollReveal(section, { selector: ".press-block" });
             class="flex flex-col gap-2"
           >
             <div
-              class="glass-surface h-20 w-20 rounded-2xl"
-              :style="{ backgroundColor: color.hex }"
+              class="glass-surface h-20 w-20 rounded-2xl transition-transform duration-200 hover:-translate-y-0.5"
+              :style="{ backgroundColor: color.hex, transitionTimingFunction: 'var(--ease-mechanical)' }"
             />
             <span class="font-sans text-xs text-fg-muted">{{ color.name }}</span>
             <span class="font-sans text-xs uppercase text-fg-subtle">{{ color.hex }}</span>
