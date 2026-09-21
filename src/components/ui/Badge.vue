@@ -4,13 +4,13 @@ import { computed } from "vue";
 const props = withDefaults(
   defineProps<{
     as?: string;
-    /** `glass`: translucent blurred pill/card (default, used everywhere). `solid`: opaque white pill reserved for primary CTAs. */
+    /** `glass`: bordered outline button/tag (default). `solid`: filled red primary CTA. */
     tone?: "glass" | "solid";
     size?: "sm" | "md" | "lg";
     href?: string;
     to?: string;
     interactive?: boolean;
-    /** Stack content vertically, left-aligned, as a rounded card instead of the default centered pill (e.g. perk/event/team cards). */
+    /** Stack content vertically, left-aligned, as a card instead of the default centered inline button. */
     column?: boolean;
     /** Append a trailing arrow, used on primary CTAs. */
     arrow?: boolean;
@@ -34,18 +34,18 @@ const tag = computed(() => {
 const sizeClasses = computed(() => {
   switch (props.size) {
     case "sm":
-      return props.column ? "rounded-2xl px-4 py-3 text-xs" : "px-4 py-2 text-xs";
+      return props.column ? "p-4 text-xs" : "min-h-9 px-3.5 py-2 text-[11px]";
     case "lg":
-      return props.column ? "rounded-3xl px-8 py-8 text-lg" : "px-8 py-4 text-base";
+      return props.column ? "p-8 text-base" : "min-h-12 px-6 py-3.5 text-[13px]";
     default:
-      return props.column ? "rounded-2xl px-6 py-6 text-sm" : "px-5 py-2.5 text-sm";
+      return props.column ? "p-6 text-sm" : "min-h-10 px-4 py-2.5 text-xs";
   }
 });
 
 const toneClasses = computed(() =>
   props.tone === "solid"
-    ? "bg-fg text-bg"
-    : "glass-surface relative overflow-hidden text-fg",
+    ? "border border-accent bg-accent text-white"
+    : "glass-surface text-fg",
 );
 </script>
 
@@ -54,20 +54,19 @@ const toneClasses = computed(() =>
     :is="tag"
     :href="href"
     :to="to"
-    class="flex gap-2 font-display uppercase tracking-tight leading-none transition-all duration-200"
+    class="gap-2 leading-none transition-[background-color,border-color,color,translate,box-shadow] duration-200"
     :class="[
       sizeClasses,
       toneClasses,
-      !column && 'rounded-sm',
       column
-        ? 'flex-col items-start justify-start text-left normal-case'
-        : 'inline-flex items-center justify-center',
+        ? 'flex flex-col items-start justify-start text-left font-sans normal-case'
+        : 'inline-flex items-center justify-center font-mono font-semibold tracking-wide uppercase',
       interactive &&
         tone === 'glass' &&
-        'cursor-pointer hover:border-border-strong hover:bg-glass-hover',
+        'cursor-pointer hover:border-border-strong hover:bg-glass-hover hover:-translate-y-0.5',
       interactive &&
         tone === 'solid' &&
-        'cursor-pointer hover:opacity-85',
+        'cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-8px_rgba(255,61,46,0.6)] active:translate-y-0',
     ]"
     :style="{ transitionTimingFunction: 'var(--ease-mechanical)' }"
   >

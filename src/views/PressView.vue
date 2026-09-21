@@ -29,12 +29,12 @@ useScrollReveal(section, { selector: ".press-block" });
 </script>
 
 <template>
-  <div class="px-4 py-28 sm:px-6">
+  <div class="wrap py-10 md:py-16">
     <div ref="section" class="mx-auto max-w-6xl">
-      <h1 class="mb-4 font-display text-3xl uppercase tracking-tight sm:text-5xl">
+      <h1 class="page-title">
         Press &amp; Media Kit
       </h1>
-      <p class="press-block mb-16 max-w-xl font-sans text-sm text-fg-muted">
+      <p class="press-block page-sub mb-12">
         {{ boilerplate }}
       </p>
 
@@ -55,7 +55,7 @@ useScrollReveal(section, { selector: ".press-block" });
             :key="logo.file"
             :href="logo.src"
             :download="logo.file"
-            class="glass-surface relative flex flex-col items-center gap-4 overflow-hidden rounded-2xl px-4 py-6 text-center transition-transform duration-200 hover:-translate-y-0.5 hover:bg-glass-hover"
+            class="glass-surface relative flex flex-col items-center gap-4 overflow-hidden px-4 py-6 text-center transition-transform duration-200 hover:-translate-y-0.5 hover:bg-glass-hover"
             :style="{ transitionTimingFunction: 'var(--ease-mechanical)' }"
           >
             <img :src="logo.src" :alt="logo.label" loading="lazy" class="h-16 w-auto" />
@@ -76,7 +76,7 @@ useScrollReveal(section, { selector: ".press-block" });
             class="flex flex-col gap-2"
           >
             <div
-              class="glass-surface h-20 w-20 rounded-2xl transition-transform duration-200 hover:-translate-y-0.5"
+              class="glass-surface h-20 w-20 transition-transform duration-200 hover:-translate-y-0.5"
               :style="{ backgroundColor: color.hex, transitionTimingFunction: 'var(--ease-mechanical)' }"
             />
             <span class="font-sans text-xs text-fg-muted">{{ color.name }}</span>

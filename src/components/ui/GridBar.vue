@@ -1,16 +1,8 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ marks?: number }>(), { marks: 16 });
+// Hairline section divider. (Kept as a component so existing pages that
+// drop it between blocks keep working.)
 </script>
 
 <template>
-  <div class="h-6 w-full border-b border-border" aria-hidden="true">
-    <div class="flex h-full items-center justify-between px-4 sm:px-6">
-      <span
-        v-for="n in marks"
-        :key="n"
-        class="select-none font-sans text-xs leading-none text-fg-subtle"
-        >+</span
-      >
-    </div>
-  </div>
+  <div class="h-px w-full bg-border" aria-hidden="true" />
 </template>

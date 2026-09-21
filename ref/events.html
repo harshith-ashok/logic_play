@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events — Logic Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0908; --bg-raised:#121110; --line:#262421; --line-strong:#3a3733;
+    --text:#f2efe9; --text-dim:#948e84; --text-faint:#56514a;
+    --red:#ff3d2e; --red-dim:#7a2a22; --green:#7ee08a; --amber:#e8b04b; --cyan:#4be0e0;
+    --wrap:1180px; --ease:cubic-bezier(.16,1,.3,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Space Grotesk',sans-serif; -webkit-font-smoothing:antialiased; line-height:1.5; overflow-x:hidden; }
+  ::selection{ background:var(--red); color:#0a0908; }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; cursor:pointer; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .loader{ position:fixed; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; transition:opacity .6s var(--ease), visibility .6s; }
+  .loader.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+  .loader-mark{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:clamp(1.4rem,4vw,2rem); letter-spacing:.08em; display:flex; gap:2px; overflow:hidden; }
+  .loader-mark span{ display:inline-block; transform:translateY(110%); animation: loaderUp .7s var(--spring) forwards; }
+  .loader-bar{ position:absolute; bottom:0; left:0; height:2px; background:var(--red); width:0%; animation: loaderBar 1.5s var(--ease) forwards; }
+  @keyframes loaderUp{ to{ transform:translateY(0); } }
+  @keyframes loaderBar{ 0%{width:0%} 100%{width:100%} }
+
+  .cursor-dot,.cursor-ring{ position:fixed; top:0; left:0; pointer-events:none; z-index:150; border-radius:50%; transform:translate(-50%,-50%); }
+  .cursor-dot{ width:6px; height:6px; background:var(--red); }
+  .cursor-ring{ width:34px; height:34px; border:1px solid var(--text-dim); transition:width .25s var(--ease),height .25s var(--ease),border-color .25s; }
+  .cursor-ring.big{ width:60px; height:60px; border-color:var(--red); }
+  @media (pointer:coarse){ .cursor-dot,.cursor-ring{ display:none; } }
+
+  .grid-bg{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:90px 90px; opacity:.32;
+    -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 30%, transparent 85%);
+            mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 30%, transparent 85%);
+    animation: gridDrift 30s linear infinite;
+  }
+  @keyframes gridDrift{ 0%{background-position:0 0;} 100%{background-position:90px 180px;} }
+
+  header, main, footer{ position:relative; z-index:1; }
+  .wrap{ max-width:var(--wrap); margin:0 auto; padding:0 32px; }
+
+  header{ position:sticky; top:0; z-index:50; background:rgba(10,9,8,.82); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+    transform:translateY(-100%); animation: headerDrop .7s .1s var(--spring) forwards; }
+  @keyframes headerDrop{ to{ transform:translateY(0); } }
+  .nav{ display:flex; align-items:center; justify-content:space-between; height:64px; }
+  .wordmark{ display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono', monospace; font-weight:700; font-size:15px; border:1px solid var(--text); padding:5px 10px; transition: transform .3s var(--spring), background .3s, color .3s; }
+  .wordmark:hover{ transform:scale(1.05) rotate(-1deg); background:var(--text); color:var(--bg); }
+  .wordmark .dot{ width:6px; height:6px; background:var(--red); border-radius:50%; animation: dotPulse 1.6s ease-in-out infinite; }
+  @keyframes dotPulse{ 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.7);opacity:.5;} }
+  .nav-links{ display:flex; gap:28px; list-style:none; margin:0; padding:0; }
+  .nav-links a{ font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--text-dim); display:flex; gap:6px; align-items:baseline; position:relative; padding:4px 0; transition: color .25s var(--ease), transform .25s var(--spring); }
+  .nav-links a .idx{ color:var(--text-faint); transition: color .25s; }
+  .nav-links a::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:1px; background:var(--red); transform:scaleX(0); transform-origin:left; transition: transform .35s var(--spring); }
+  .nav-links a:hover, .nav-links a.active{ color:var(--text); transform:translateY(-2px); }
+  .nav-links a:hover .idx{ color:var(--red); }
+  .nav-links a:hover::after, .nav-links a.active::after{ transform:scaleX(1); }
+  .nav-actions{ display:flex; align-items:center; gap:10px; }
+  .icon-btn{ width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--line); background:transparent; color:var(--text-dim); transition: border-color .2s, color .2s, transform .4s var(--spring); }
+  .icon-btn:hover{ border-color:var(--text-dim); color:var(--text); transform:rotate(180deg); }
+  .btn{ font-family:'JetBrains Mono', monospace; font-size:12.5px; font-weight:600; padding:9px 16px; border:1px solid var(--text); background:transparent; color:var(--text); display:inline-flex; align-items:center; gap:8px; transition: transform .25s var(--spring), box-shadow .3s, background .25s, color .25s; }
+  .btn-red{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn-red:hover{ transform:translateY(-3px) scale(1.03); box-shadow:0 10px 30px -8px rgba(255,61,46,.6); }
+  .btn-red:active{ transform:translateY(0) scale(.98); }
+  .btn-red[disabled]{ background:var(--bg-raised); border-color:var(--line-strong); color:var(--text-faint); cursor:default; transform:none; box-shadow:none; }
+  .btn.ghost:hover{ border-color:var(--red); color:var(--text); transform:translateY(-2px); }
+  .mobile-toggle{ display:none; }
+
+  .reveal{ opacity:0; transform:translateY(32px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: var(--d,0s); }
+  .reveal.visible{ opacity:1; transform:none; }
+
+  /* ---- hero ---- */
+  .page-hero{ padding: 70px 0 40px; }
+  .eyebrow-row{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+  .eyebrow-row .line{ width:36px; height:1px; background:var(--red); }
+  .page-title{ font-size: clamp(2.2rem,6vw,4rem); font-weight:700; letter-spacing:-.02em; margin:0 0 16px; }
+  .page-sub{ color:var(--text-dim); font-size:15.5px; max-width:60ch; margin:0; }
+
+  /* ---- countdown ---- */
+  .countdown-bar{
+    border:1px solid var(--line); background: var(--bg-raised); margin-top:36px;
+    display:flex; align-items:center; justify-content:space-between; padding: 22px 28px; flex-wrap:wrap; gap:20px;
+  }
+  .countdown-label{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-faint); letter-spacing:.05em; }
+  .countdown-name{ font-size:1.2rem; font-weight:600; margin-top:4px; }
+  .countdown-clock{ display:flex; gap:18px; }
+  .clock-unit{ text-align:center; }
+  .clock-unit b{ display:block; font-family:'JetBrains Mono', monospace; font-size:1.7rem; font-weight:700; font-variant-numeric: tabular-nums; }
+  .clock-unit span{ font-size:10px; color:var(--text-faint); letter-spacing:.08em; }
+
+  /* ---- tabs ---- */
+  .tabbar{ display:flex; gap:10px; margin: 46px 0 34px; border-bottom:1px solid var(--line); }
+  .tab{
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; font-weight:600; color:var(--text-faint);
+    background:none; border:none; padding: 12px 4px; position:relative; letter-spacing:.03em;
+    transition: color .25s;
+  }
+  .tab::after{ content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--red); transform:scaleX(0); transition: transform .3s var(--spring); }
+  .tab.active{ color:var(--text); }
+  .tab.active::after{ transform:scaleX(1); }
+  .tab-count{ color:var(--text-faint); margin-left:4px; }
+
+  /* ---- event cards ---- */
+  .events-list{ display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .event-card{
+    background:var(--bg); display:grid; grid-template-columns: 110px 1fr auto; gap:26px; padding: 28px 26px;
+    align-items:center; transition: background .3s, padding-left .3s var(--ease); position:relative;
+  }
+  .event-card:hover{ background: var(--bg-raised); padding-left: 34px; }
+  .event-card::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:2px; background:var(--red); transform:scaleY(0); transform-origin:top; transition: transform .4s var(--ease); }
+  .event-card:hover::before{ transform:scaleY(1); }
+  .date-block{ text-align:center; border:1px solid var(--line-strong); padding: 10px 4px; }
+  .date-block .day{ display:block; font-family:'JetBrains Mono', monospace; font-size:1.6rem; font-weight:700; line-height:1; }
+  .date-block .mon{ display:block; font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--text-faint); letter-spacing:.08em; margin-top:4px; }
+  .event-info .tag{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--red); letter-spacing:.06em; margin-bottom:6px; display:block; }
+  .event-info h3{ margin:0 0 6px; font-size:1.2rem; font-weight:600; }
+  .event-info p{ margin:0; color:var(--text-dim); font-size:14px; max-width:56ch; }
+  .event-meta{ display:flex; gap:14px; margin-top:10px; font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--text-faint); flex-wrap:wrap; }
+  .event-actions{ display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+  .rsvp-btn{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:700; padding:9px 16px;
+    border:1px solid var(--text); background:transparent; color:var(--text); white-space:nowrap;
+    transition: background .25s, color .25s, border-color .25s, transform .2s var(--spring);
+  }
+  .rsvp-btn:hover{ transform: translateY(-2px); }
+  .rsvp-btn.going{ background: var(--green); border-color: var(--green); color:#0a0908; }
+  .recap-link{ font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--text-faint); transition: color .2s; }
+  .recap-link:hover{ color: var(--red); }
+
+  footer{ border-top:1px solid var(--line); padding:40px 0; margin-top:60px; }
+  .foot-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; }
+  .foot-links{ display:flex; gap:10px; }
+  .foot-links a{ font-family:'JetBrains Mono', monospace; font-size:12px; border:1px solid var(--line); padding:8px 12px; color:var(--text-dim); transition: all .25s var(--spring); }
+  .foot-links a:hover{ border-color:var(--text); color:var(--bg); background:var(--text); transform:translateY(-3px); }
+  .foot-meta{ display:flex; justify-content:space-between; margin-top:26px; font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--text-faint); flex-wrap:wrap; gap:10px; }
+
+  :focus-visible{ outline:2px solid var(--red); outline-offset:2px; }
+
+  @media (max-width:880px){
+    .nav-links{ position:fixed; inset:64px 0 0 0; background:var(--bg); flex-direction:column; padding:30px 24px; gap:0; transform:translateY(-8px); opacity:0; pointer-events:none; transition: opacity .25s var(--ease), transform .25s var(--ease); border-top:1px solid var(--line); }
+    .nav-links.open{ opacity:1; transform:none; pointer-events:auto; }
+    .nav-links a{ padding:16px 0; border-bottom:1px solid var(--line); font-size:14px; }
+    .mobile-toggle{ display:grid; place-items:center; width:34px; height:34px; border:1px solid var(--line); background:none; color:var(--text); }
+    .event-card{ grid-template-columns: 70px 1fr; }
+    .event-actions{ grid-column:1/-1; flex-direction:row; align-items:center; justify-content:space-between; margin-top:12px; }
+  }
+  @media (max-width:540px){
+    .wrap{ padding:0 20px; }
+    .countdown-bar{ flex-direction:column; align-items:flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+    .reveal{ opacity:1 !important; transform:none !important; }
+    .loader{ display:none !important; }
+    .cursor-dot,.cursor-ring{ display:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="loader-mark mono">
+    <span style="animation-delay:.02s">L</span><span style="animation-delay:.06s">O</span><span style="animation-delay:.10s">G</span><span style="animation-delay:.14s">I</span><span style="animation-delay:.18s">C</span><span style="animation-delay:.22s">&nbsp;</span><span style="animation-delay:.26s">P</span><span style="animation-delay:.30s">L</span><span style="animation-delay:.34s">A</span><span style="animation-delay:.38s">Y</span>
+  </div>
+  <div class="loader-bar"></div>
+</div>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="grid-bg"></div>
+
+<header>
+  <div class="wrap nav">
+    <a href="index.html" class="wordmark"><span class="dot"></span>LOGIC PLAY</a>
+    <nav>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html"><span class="idx">01</span>HOME</a></li>
+        <li><a href="gallery.html"><span class="idx">02</span>GALLERY</a></li>
+        <li><a href="events.html" class="active"><span class="idx">03</span>EVENTS</a></li>
+        <li><a href="blog.html"><span class="idx">04</span>BLOG</a></li>
+        <li><a href="index.html#team"><span class="idx">05</span>TEAM</a></li>
+      </ul>
+    </nav>
+    <div class="nav-actions">
+      <a href="index.html#join" class="btn btn-red magnetic">JOIN →</a>
+      <a href="account.html" class="icon-btn" aria-label="Account" title="Account">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      </a>
+      <button class="icon-btn mobile-toggle" id="mobileToggle" aria-label="Open menu" aria-expanded="false">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap page-hero">
+    <div class="eyebrow-row reveal"><span class="line"></span><span class="mono" style="font-size:12px;color:var(--text-faint);letter-spacing:.08em;">CALENDAR</span></div>
+    <h1 class="page-title reveal" style="--d:.05s">Events</h1>
+    <p class="page-sub reveal" style="--d:.1s">Hackathons, workshops, and build sessions — RSVP to hold your seat. Rolling review, first come first served.</p>
+
+    <div class="countdown-bar reveal" style="--d:.18s">
+      <div>
+        <div class="countdown-label mono">NEXT UP IN</div>
+        <div class="countdown-name" id="nextEventName">—</div>
+      </div>
+      <div class="countdown-clock mono" id="countdownClock">
+        <div class="clock-unit"><b id="cd-days">00</b><span>DAYS</span></div>
+        <div class="clock-unit"><b id="cd-hours">00</b><span>HRS</span></div>
+        <div class="clock-unit"><b id="cd-mins">00</b><span>MIN</span></div>
+        <div class="clock-unit"><b id="cd-secs">00</b><span>SEC</span></div>
+      </div>
+    </div>
+
+    <div class="tabbar reveal" style="--d:.22s">
+      <button class="tab active" data-panel="upcoming">UPCOMING <span class="tab-count">(3)</span></button>
+      <button class="tab" data-panel="past">PAST <span class="tab-count">(3)</span></button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="panel active" id="panel-upcoming">
+      <div class="events-list">
+        <div class="event-card reveal" style="--d:0s" data-id="rag-build-weekend">
+          <div class="date-block"><span class="day mono">04</span><span class="mon mono">OCT</span></div>
+          <div class="event-info">
+            <span class="tag">HACKATHON</span>
+            <h3>Build Weekend: RAG in a Day</h3>
+            <p>48 hours to ship a working retrieval-augmented app. Teams of 2–4, mentors on call throughout.</p>
+            <div class="event-meta"><span>SAT–SUN</span><span>·</span><span>TECH PARK, LAB 3</span><span>·</span><span>IN-PERSON</span></div>
+          </div>
+          <div class="event-actions">
+            <button class="rsvp-btn" data-event="rag-build-weekend">RSVP →</button>
+            <span class="recap-link mono">32 GOING</span>
+          </div>
+        </div>
+        <div class="event-card reveal" style="--d:.06s" data-id="genai-hackathon-2026">
+          <div class="date-block"><span class="day mono">18</span><span class="mon mono">OCT</span></div>
+          <div class="event-info">
+            <span class="tag">HACKATHON</span>
+            <h3>GenAI Hackathon 2026</h3>
+            <p>Our flagship annual hackathon — open to all years. Sponsored prize track for best agentic workflow.</p>
+            <div class="event-meta"><span>SAT</span><span>·</span><span>MAIN AUDITORIUM</span><span>·</span><span>IN-PERSON</span></div>
+          </div>
+          <div class="event-actions">
+            <button class="rsvp-btn" data-event="genai-hackathon-2026">RSVP →</button>
+            <span class="recap-link mono">58 GOING</span>
+          </div>
+        </div>
+        <div class="event-card reveal" style="--d:.12s" data-id="pytorch-workshop">
+          <div class="date-block"><span class="day mono">08</span><span class="mon mono">NOV</span></div>
+          <div class="event-info">
+            <span class="tag">WORKSHOP</span>
+            <h3>Intro to PyTorch, Hands-On</h3>
+            <p>From tensors to a trained image classifier in one sitting. Bring a laptop, we'll bring the GPUs.</p>
+            <div class="event-meta"><span>FRI · 5:30 PM</span><span>·</span><span>ONLINE</span></div>
+          </div>
+          <div class="event-actions">
+            <button class="rsvp-btn" data-event="pytorch-workshop">RSVP →</button>
+            <span class="recap-link mono">21 GOING</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-past">
+      <div class="events-list">
+        <div class="event-card reveal" style="--d:0s">
+          <div class="date-block"><span class="day mono">14</span><span class="mon mono">AUG</span></div>
+          <div class="event-info">
+            <span class="tag" style="color:var(--text-faint);">HACKATHON</span>
+            <h3>Vision Sprint Hackathon</h3>
+            <p>24-hour computer vision sprint — 40 members, 11 teams, one very tired panel of judges.</p>
+            <div class="event-meta"><span>40 ATTENDED</span></div>
+          </div>
+          <div class="event-actions">
+            <a class="recap-link mono" href="gallery.html?event=vision-sprint">VIEW PHOTOS →</a>
+          </div>
+        </div>
+        <div class="event-card reveal" style="--d:.06s">
+          <div class="date-block"><span class="day mono">21</span><span class="mon mono">JUL</span></div>
+          <div class="event-info">
+            <span class="tag" style="color:var(--text-faint);">WORKSHOP</span>
+            <h3>LLM Fine-Tuning Bootcamp</h3>
+            <p>A weekend deep-dive into LoRA and fine-tuning open models on consumer GPUs.</p>
+            <div class="event-meta"><span>26 ATTENDED</span></div>
+          </div>
+          <div class="event-actions">
+            <a class="recap-link mono" href="gallery.html?event=finetuning-bootcamp">VIEW PHOTOS →</a>
+          </div>
+        </div>
+        <div class="event-card reveal" style="--d:.12s">
+          <div class="date-block"><span class="day mono">02</span><span class="mon mono">APR</span></div>
+          <div class="event-info">
+            <span class="tag" style="color:var(--text-faint);">TALK</span>
+            <h3>Founders' Fireside</h3>
+            <p>Three alumni who turned club projects into funded startups, on what actually mattered.</p>
+            <div class="event-meta"><span>75 ATTENDED</span></div>
+          </div>
+          <div class="event-actions">
+            <a class="recap-link mono" href="gallery.html?event=founders-fireside">VIEW PHOTOS →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <a href="index.html" class="wordmark"><span class="dot"></span>LOGIC PLAY</a>
+      <div class="foot-links">
+        <a href="gallery.html">GALLERY</a>
+        <a href="events.html">EVENTS</a>
+        <a href="index.html#team">TEAM</a>
+      </div>
+      <div class="foot-links">
+        <a href="https://instagram.com" target="_blank" rel="noopener">INSTAGRAM</a>
+        <a href="https://discord.com" target="_blank" rel="noopener">DISCORD</a>
+        <a href="https://linkedin.com" target="_blank" rel="noopener">LINKEDIN</a>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 Logic Play. All rights reserved.</span>
+      <span>Built by people who ship.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  window.addEventListener('load', () => {
+    const loader = document.getElementById('loader');
+    setTimeout(() => loader.classList.add('hide'), reduce ? 0 : 900);
+  });
+
+  const mobileToggle = document.getElementById('mobileToggle');
+  const navLinks = document.getElementById('navLinks');
+  mobileToggle.addEventListener('click', () => {
+    const open = navLinks.classList.toggle('open');
+    mobileToggle.setAttribute('aria-expanded', open);
+  });
+
+  const revealEls = document.querySelectorAll('.reveal');
+  if(reduce){ revealEls.forEach(el => el.classList.add('visible')); }
+  else{
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { threshold:.15 });
+    revealEls.forEach(el => io.observe(el));
+  }
+
+  if(!reduce && window.matchMedia('(pointer:fine)').matches){
+    const dot = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    window.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; dot.style.left=mx+'px'; dot.style.top=my+'px'; });
+    (function loop(){ rx+=(mx-rx)*0.16; ry+=(my-ry)*0.16; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(loop); })();
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => ring.classList.add('big'));
+      el.addEventListener('mouseleave', () => ring.classList.remove('big'));
+    });
+    document.querySelectorAll('.magnetic').forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const r = btn.getBoundingClientRect();
+        btn.style.transform = `translate(${(e.clientX-r.left-r.width/2)*0.25}px, ${(e.clientY-r.top-r.height/2)*0.35}px)`;
+      });
+      btn.addEventListener('mouseleave', () => btn.style.transform='');
+    });
+  }
+
+  // tabs
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+    });
+  });
+
+  // RSVP — persisted in localStorage, shared with account.html
+  const RSVP_KEY = 'logicplay_rsvp_v1';
+  function getRsvps(){ try{ return JSON.parse(localStorage.getItem(RSVP_KEY)) || {}; }catch(e){ return {}; } }
+  function setRsvps(obj){ try{ localStorage.setItem(RSVP_KEY, JSON.stringify(obj)); }catch(e){} }
+
+  const rsvpButtons = document.querySelectorAll('.rsvp-btn');
+  const rsvps = getRsvps();
+  rsvpButtons.forEach(btn => {
+    const id = btn.dataset.event;
+    if(rsvps[id]){ btn.textContent = "YOU'RE IN ✓"; btn.classList.add('going'); }
+    btn.addEventListener('click', () => {
+      const current = getRsvps();
+      const going = !current[id];
+      current[id] = going;
+      setRsvps(current);
+      btn.textContent = going ? "YOU'RE IN ✓" : 'RSVP →';
+      btn.classList.toggle('going', going);
+    });
+  });
+
+  // countdown to next upcoming event
+  const nextEvent = { name: 'Build Weekend: RAG in a Day', date: new Date('2026-10-04T09:00:00') };
+  document.getElementById('nextEventName').textContent = nextEvent.name;
+  function tickCountdown(){
+    const diff = nextEvent.date - new Date();
+    const d = document.getElementById('cd-days'), h = document.getElementById('cd-hours'),
+          m = document.getElementById('cd-mins'), s = document.getElementById('cd-secs');
+    if(diff <= 0){ d.textContent=h.textContent=m.textContent=s.textContent='00'; return; }
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    d.textContent = String(days).padStart(2,'0');
+    h.textContent = String(hours).padStart(2,'0');
+    m.textContent = String(mins).padStart(2,'0');
+    s.textContent = String(secs).padStart(2,'0');
+  }
+  tickCountdown();
+  setInterval(tickCountdown, 1000);
+</script>
+
+</body>
+</html>

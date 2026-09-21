@@ -1,65 +1,61 @@
 import { onMounted, onUnmounted, type Ref } from "vue";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
-// Mobile browsers resize the viewport as the URL bar collapses; without this
-// every such resize refreshes all triggers mid-scroll and causes visible jank.
-ScrollTrigger.config({ ignoreMobileResize: true });
 
 interface RevealOptions {
-  /** CSS selector (relative to the root element) for items to stagger in. Defaults to the root itself. */
+  /** CSS selector (relative to the root element) for items to reveal. Defaults to the root itself. */
   selector?: string;
-  y?: number;
+  /** Seconds of delay between neighbours (cycled every 4 items so long grids never lag). */
   stagger?: number;
-  duration?: number;
-  delay?: number;
+}
+
+const REDUCED = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// One observer for the whole app. Each element gets `.rv` (hidden, offset) on
+// mount and `.rv-in` when it scrolls into view; both classes are removed once
+// the transition is done so the element goes back to plain, un-animated CSS
+// (hover transforms etc. aren't fought by a leftover reveal state).
+let observer: IntersectionObserver | null = null;
+
+function getObserver() {
+  observer ??= new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const el = entry.target as HTMLElement;
+        observer!.unobserve(el);
+        el.classList.add("rv-in");
+        window.setTimeout(() => {
+          el.classList.remove("rv", "rv-in");
+          el.style.removeProperty("--d");
+        }, 1100);
+      }
+    },
+    { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
+  );
+  return observer;
 }
 
 /**
- * Punch-in scroll entrance: elements snap up into place with a sharp,
- * mechanical ease rather than a springy/bouncy default.
+ * Scroll-triggered entrance: elements fade/slide up once, using CSS
+ * transitions and a single shared IntersectionObserver (no animation library,
+ * no scroll listeners).
  */
-export function useScrollReveal(
-  root: Ref<HTMLElement | null>,
-  options: RevealOptions = {},
-) {
-  const { selector, y = 32, stagger = 0.08, duration = 0.6, delay = 0 } = options;
-  let triggers: ScrollTrigger[] = [];
+export function useScrollReveal(root: Ref<HTMLElement | null>, options: RevealOptions = {}) {
+  const { selector, stagger = 0.06 } = options;
+  let targets: HTMLElement[] = [];
 
   onMounted(() => {
-    if (!root.value) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const mobile = window.matchMedia("(max-width: 639px)").matches;
-    const targets = selector
-      ? root.value.querySelectorAll<HTMLElement>(selector)
-      : root.value;
-
-    const tween = gsap.fromTo(
-      targets,
-      { y: mobile ? Math.min(y, 16) : y, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        duration: mobile ? Math.min(duration, 0.45) : duration,
-        delay,
-        stagger: mobile ? Math.min(stagger, 0.05) : stagger,
-        ease: "power3.out",
-        force3D: true,
-        clearProps: "transform,opacity",
-        scrollTrigger: {
-          trigger: root.value,
-          start: "top 85%",
-          once: true,
-        },
-      },
-    );
-
-    if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
+    if (!root.value || REDUCED()) return;
+    targets = selector ? Array.from(root.value.querySelectorAll<HTMLElement>(selector)) : [root.value];
+    const io = getObserver();
+    targets.forEach((el, i) => {
+      el.style.setProperty("--d", `${(i % 4) * stagger}s`);
+      el.classList.add("rv");
+      io.observe(el);
+    });
   });
 
   onUnmounted(() => {
-    triggers.forEach((trigger) => trigger.kill());
-    triggers = [];
+    targets.forEach((el) => observer?.unobserve(el));
+    targets = [];
   });
 }

@@ -4,8 +4,8 @@ export type Theme = "dark" | "light";
 
 const STORAGE_KEY = "logicplay-theme";
 const THEME_COLOR: Record<Theme, string> = {
-  dark: "#08090b",
-  light: "#f5f5f4",
+  dark: "#0a0908",
+  light: "#f2efe9",
 };
 
 // Module-level singleton so every component sees the same theme state
@@ -18,14 +18,25 @@ const theme = ref<Theme>(
 
 watchEffect(() => {
   document.documentElement.setAttribute("data-theme", theme.value);
-  localStorage.setItem(STORAGE_KEY, theme.value);
+  try {
+    localStorage.setItem(STORAGE_KEY, theme.value);
+  } catch {
+    /* storage unavailable (private mode) — theme still applies this session */
+  }
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute("content", THEME_COLOR[theme.value]);
 });
 
+let themingTimer: number | undefined;
+
 export function useTheme() {
   function toggle() {
+    // Crossfade colors only for the duration of the switch (see `.theming` in style.css).
+    const root = document.documentElement;
+    root.classList.add("theming");
+    window.clearTimeout(themingTimer);
+    themingTimer = window.setTimeout(() => root.classList.remove("theming"), 450);
     theme.value = theme.value === "dark" ? "light" : "dark";
   }
   return { theme, toggle };

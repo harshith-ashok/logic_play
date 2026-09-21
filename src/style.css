@@ -1,192 +1,109 @@
 @import "tailwindcss";
 
+/* Self-hosted, latin subset only (~53KB total). Space Grotesk carries all
+   headings/body, JetBrains Mono the labels/UI chrome. */
 @font-face {
-  font-family: "Geist Mono";
-  src: url("./fonts/GeistMono[wght].woff2") format("woff2");
-  font-weight: 100 900;
+  font-family: "Space Grotesk";
+  src: url("./fonts/SpaceGrotesk-latin.woff2") format("woff2");
+  font-weight: 300 700;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "Geist Mono";
-  src: url("./fonts/GeistMono-Italic[wght].woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: italic;
+  font-family: "JetBrains Mono";
+  src: url("./fonts/JetBrainsMono-latin.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
   font-display: swap;
 }
 
 @theme {
-  /* Surfaces */
-  --color-bg: #08090b;
-  --color-bg-elevated: #101114;
-  --color-fg: #ffffff;
+  /* Surfaces — warm near-black */
+  --color-bg: #0a0908;
+  --color-bg-elevated: #121110;
+  --color-fg: #f2efe9;
 
-  /* Foreground opacity steps, exposed as first-class colors so `text-fg-muted`
-     etc. work without remembering an opacity value at every call site. */
-  --color-fg-muted: rgba(255, 255, 255, 0.62);
-  --color-fg-subtle: rgba(255, 255, 255, 0.4);
+  --color-fg-muted: #948e84;
+  --color-fg-subtle: #6f6a61;
 
-  /* Glass surfaces + borders — the one recipe reused everywhere via Badge.vue */
-  --color-glass: rgba(255, 255, 255, 0.06);
-  --color-glass-hover: rgba(255, 255, 255, 0.1);
-  --color-border: rgba(255, 255, 255, 0.18);
-  --color-border-strong: rgba(255, 255, 255, 0.24);
+  /* Fills + hairlines. `glass` is kept as a token name so existing utilities
+     keep working, but it is now a flat translucent fill (no backdrop blur). */
+  --color-glass: rgba(242, 239, 233, 0.025);
+  --color-glass-hover: rgba(242, 239, 233, 0.06);
+  --color-border: #262421;
+  --color-border-strong: #3a3733;
 
-  /* Cinematic red accent — glow only, never a flat fill */
-  --color-accent: #ff3b3b;
-  --color-accent-soft: rgba(255, 59, 59, 0.35);
+  /* Signal colors */
+  --color-accent: #ff3d2e;
+  --color-accent-soft: rgba(255, 61, 46, 0.16);
+  --color-accent-dim: #7a2a22;
+  --color-amber: #e8b04b;
+  --color-cyan: #4be0e0;
+  --color-green: #7ee08a;
 
-  --font-display: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
-  --font-sans: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 
-  --ease-mechanical: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-mechanical: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Sharp corners site-wide: overriding Tailwind's radius scale here means
-     every existing rounded-* utility tightens at once. `full` is untouched
-     (still used for genuinely round things: blobs, dots). */
-  --radius-xs: 0.0625rem;
-  --radius-sm: 0.125rem;
-  --radius-md: 0.125rem;
-  --radius-lg: 0.1875rem;
-  --radius-xl: 0.25rem;
-  --radius-2xl: 0.25rem;
-  --radius-3xl: 0.375rem;
+  /* Square corners everywhere. `full` stays for dots/blobs. */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
 }
 
-/* Light mode: override the same custom properties `@theme` set above.
-   Every utility class already resolves through `var(--color-*)`, so
-   nothing downstream needs a `dark:`/`light:` variant — redefining the
-   tokens here is enough for the whole site to re-theme itself. */
 :root[data-theme="light"] {
-  --color-bg: #f5f5f4;
-  --color-bg-elevated: #eaeae8;
-  --color-fg: #0b0c0e;
-  --color-fg-muted: rgba(11, 12, 14, 0.62);
-  --color-fg-subtle: rgba(11, 12, 14, 0.4);
-  --color-glass: rgba(0, 0, 0, 0.04);
-  --color-glass-hover: rgba(0, 0, 0, 0.07);
-  --color-border: rgba(0, 0, 0, 0.16);
-  --color-border-strong: rgba(0, 0, 0, 0.22);
-  --color-accent-soft: rgba(255, 59, 59, 0.18);
+  --color-bg: #f2efe9;
+  --color-bg-elevated: #e8e4da;
+  --color-fg: #0a0908;
+  --color-fg-muted: #5a564e;
+  --color-fg-subtle: #837d72;
+  --color-glass: rgba(10, 9, 8, 0.03);
+  --color-glass-hover: rgba(10, 9, 8, 0.06);
+  --color-border: #d8d3c6;
+  --color-border-strong: #bdb7a8;
+  --color-accent: #e5301f;
+  --color-accent-soft: rgba(229, 48, 31, 0.1);
+  --color-accent-dim: #f0b9b2;
+  --color-amber: #9a6a12;
+  --color-cyan: #0f8a8a;
+  --color-green: #1d8a37;
 }
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   background-color: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans);
+  line-height: 1.5;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Smooth color crossfade on theme toggle. Low specificity (type + universal
-   selector) on purpose — anything with its own Tailwind `transition-*`
-   utility (e.g. Badge's `transition-all`) wins over this via normal
-   specificity rules and keeps its own timing; this is just the fallback for
-   everything else (section backgrounds, borders, plain text) so the whole
-   page crossfades together instead of snapping. */
-body,
-body * {
+/* Theme crossfade is opt-in: useTheme adds `.theming` for ~450ms around a
+   toggle. A permanent `body *` transition rule would put a transition on
+   every element on every hover/route change. */
+html.theming,
+html.theming *,
+html.theming *::before,
+html.theming *::after {
   transition:
-    background-color 0.4s var(--ease-mechanical),
-    border-color 0.4s var(--ease-mechanical),
-    color 0.4s var(--ease-mechanical),
-    fill 0.4s var(--ease-mechanical);
-}
-
-/* Reusable glass surface recipe — Badge.vue's `glass` tone is the only
-   consumer; kept here as the single definition so the blur/border pairing
-   never drifts between components. Deliberately never sets `position` or
-   `overflow` — those stay Tailwind-utility territory on each consumer so
-   this class can't fight `fixed`/`relative` utilities for the cascade. */
-.glass-surface {
-  isolation: isolate; /* own stacking context, so ::before's z-index:-1 below sits above our bg but below slotted content, with no template changes needed */
-  background-color: var(--color-glass);
-  border: 1px solid var(--color-border);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-/* Cursor-tracked spotlight, driven by --mx/--my set from useCursorGlow.ts.
-   Consumers must be `position: relative; overflow: hidden` (added as
-   Tailwind utilities per-element) so this anchors and clips correctly. */
-.glass-surface::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(
-    120px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.035),
-    transparent 100%
-  );
-  opacity: 0;
-  transition: opacity 0.3s var(--ease-mechanical);
-  pointer-events: none;
-}
-.glass-surface:hover::before {
-  opacity: 1;
-}
-
-/* Same cursor-tracked idea, scaled up and tinted red for full-bleed
-   backgrounds (the hero) instead of individual glass pills/cards — driven
-   by the same --mx/--my custom properties via useCursorGlow.ts. */
-.cursor-glow-bg::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    480px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 59, 59, 0.05),
-    transparent 100%
-  );
-  opacity: 0;
-  transition: opacity 0.4s var(--ease-mechanical);
-  pointer-events: none;
-}
-.cursor-glow-bg:hover::before {
-  opacity: 1;
-}
-
-/* Fine 1px grid lines for the crosshair/grid motif (GridBar.vue background,
-   hero backdrop). Generated, not a raster asset. Tied to --color-fg via
-   color-mix so it's automatically the right shade in both themes instead
-   of a hardcoded white. */
-.bg-grid-lines {
-  background-image:
-    linear-gradient(
-      to right,
-      color-mix(in srgb, var(--color-fg) 6%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--color-fg) 6%, transparent) 1px,
-      transparent 1px
-    );
-  background-size: 64px 64px;
-}
-
-/* Subtle printed-sticker grain over dark (or light) sections. Kept as a CSS
-   gradient noise so it stays crisp at any resolution instead of a raster
-   PNG. Uses --color-fg (not a hardcoded white) so it stays visible in both
-   themes — the outer 0.05 opacity already keeps it subtle either way. */
-.grain::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-  background-image: radial-gradient(
-      circle at 1px 1px,
-      var(--color-fg) 1px,
-      transparent 0
-    );
-  background-size: 3px 3px;
+    background-color 0.35s ease,
+    border-color 0.35s ease,
+    color 0.35s ease,
+    fill 0.35s ease !important;
 }
 
 ::selection {
@@ -194,22 +111,238 @@ body * {
   color: #fff;
 }
 
-/* Applied to live logo usages (nav, footer, hero, loader) — the source
-   PNGs are white line-art, invisible on a light background. NOT applied on
-   the Press page's logo-pack thumbnails, which must show the real
-   downloadable file unaltered. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Shared layout/type primitives (layer: overridable by utilities) ---------- */
+@layer components {
+  .wrap {
+    width: 100%;
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+  @media (min-width: 640px) {
+    .wrap {
+      padding-inline: 2rem;
+    }
+  }
+
+  /* Page top block: eyebrow + title + sub */
+  .page-hero {
+    padding-block: 3.25rem 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .page-hero {
+      padding-block: 4.5rem 2rem;
+    }
+  }
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    margin-bottom: 1.125rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--color-fg-subtle);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 2.25rem;
+    height: 1px;
+    background: var(--color-accent);
+  }
+  .page-title {
+    margin: 0 0 1rem;
+    font-size: clamp(2.2rem, 8vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .page-sub {
+    max-width: 60ch;
+    font-size: 0.95rem;
+    color: var(--color-fg-muted);
+  }
+  .sec-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .section {
+    border-top: 1px solid var(--color-border);
+    padding-block: 3.5rem;
+  }
+  @media (min-width: 768px) {
+    .section {
+      padding-block: 4.75rem;
+    }
+  }
+
+  /* Bordered surface + flat translucent fill. */
+  .glass-surface {
+    background-color: var(--color-glass);
+    border: 1px solid var(--color-border);
+  }
+  .card {
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-elevated);
+  }
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-fg-subtle);
+  }
+  .empty-state {
+    border: 1px dashed var(--color-border-strong);
+    padding: 3.5rem 1.25rem;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-fg-subtle);
+  }
+}
+
+/* ---------- Background: static circuit grid (no animated repaint) ---------- */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--color-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+  background-size: 90px 90px;
+  opacity: 0.35;
+  -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 85%);
+  mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 85%);
+}
+.node {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: var(--color-fg-subtle);
+  transform: rotate(45deg);
+  animation: nodePulse 4s ease-in-out infinite;
+}
+@keyframes nodePulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: rotate(45deg) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(45deg) scale(1.8);
+    background: var(--color-accent);
+  }
+}
+
+/* ---------- Scroll reveal (driven by useScrollReveal's IntersectionObserver) ---------- */
+.rv {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  transition:
+    opacity 0.6s var(--ease-mechanical),
+    transform 0.6s var(--ease-mechanical);
+  transition-delay: var(--d, 0s);
+}
+.rv.rv-in {
+  opacity: 1;
+  transform: none;
+}
+@media (max-width: 639px) {
+  .rv {
+    transform: translate3d(0, 14px, 0);
+    transition-duration: 0.45s;
+  }
+}
+
+/* ---------- Entrance keyframes (hero / loader / header) ---------- */
+@keyframes wordUp {
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes blink {
+  50% {
+    opacity: 0.15;
+  }
+}
+@keyframes headerDrop {
+  from {
+    transform: translate3d(0, -100%, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes marqueeScroll {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+@keyframes ringExpand {
+  from {
+    transform: translate(-50%, -50%) scale(0.07);
+    opacity: 0.5;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+@keyframes glitch {
+  0% {
+    clip-path: inset(0 0 85% 0);
+    transform: translate(-3px, -2px);
+    -webkit-text-stroke-color: var(--color-accent);
+  }
+  20% {
+    clip-path: inset(60% 0 10% 0);
+    transform: translate(3px, 1px);
+    -webkit-text-stroke-color: var(--color-cyan);
+  }
+  40% {
+    clip-path: inset(20% 0 60% 0);
+    transform: translate(-2px, 2px);
+    -webkit-text-stroke-color: var(--color-accent);
+  }
+  60% {
+    clip-path: inset(80% 0 2% 0);
+    transform: translate(2px, -1px);
+    -webkit-text-stroke-color: var(--color-cyan);
+  }
+  80% {
+    clip-path: inset(40% 0 40% 0);
+    transform: translate(-1px, 1px);
+    -webkit-text-stroke-color: var(--color-accent);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+    -webkit-text-stroke-color: var(--color-fg-subtle);
+  }
+}
+
+/* ---------- Brand mark ---------- */
+/* Logo PNG/SVGs are white line-art; invert them on the light theme. The
+   Press page's download thumbnails deliberately omit this class. */
 [data-theme="light"] .brand-mark {
   filter: invert(1);
 }
 
-/* Blog post body (rendered markdown, see shared/markdown.ts). Everything
-   resolves through the theme tokens, so it re-themes with the rest of the
-   site. Code highlighting is deliberately near-monochrome — weight and
-   opacity carry the structure, the accent is reserved for numbers/literals. */
+/* ---------- Blog post body (rendered markdown, see shared/markdown.ts) ---------- */
 .prose-post {
   font-family: var(--font-sans);
-  font-size: 0.9rem;
-  line-height: 1.85;
+  font-size: 0.97rem;
+  line-height: 1.8;
   color: var(--color-fg-muted);
   overflow-wrap: anywhere;
 }
@@ -220,12 +353,11 @@ body * {
 .prose-post h2,
 .prose-post h3,
 .prose-post h4 {
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
   color: var(--color-fg);
-  margin-top: 2.5rem;
+  margin-top: 2.25rem;
 }
 .prose-post h1 { font-size: 1.75rem; }
 .prose-post h2 { font-size: 1.35rem; }
@@ -236,7 +368,7 @@ body * {
   text-decoration: underline;
   text-decoration-color: var(--color-border-strong);
   text-underline-offset: 3px;
-  transition: text-decoration-color 0.2s var(--ease-mechanical);
+  transition: text-decoration-color 0.2s;
 }
 .prose-post a:hover { text-decoration-color: var(--color-accent); }
 .prose-post ul,
@@ -252,18 +384,17 @@ body * {
 .prose-post img {
   max-width: 100%;
   height: auto;
-  border-radius: 1rem;
   border: 1px solid var(--color-border);
 }
 .prose-post hr { border: none; border-top: 1px solid var(--color-border); }
-.prose-post table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.prose-post table { display: block; overflow-x: auto; width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .prose-post th,
 .prose-post td { border: 1px solid var(--color-border); padding: 0.5rem 0.75rem; text-align: left; }
 .prose-post :not(pre) > code {
-  background: var(--color-glass);
+  background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
-  border-radius: 0.375rem;
   padding: 0.1rem 0.4rem;
+  font-family: var(--font-mono);
   font-size: 0.85em;
   color: var(--color-fg);
 }
@@ -271,50 +402,59 @@ body * {
   position: relative;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
-  border-radius: 1rem;
-  padding: 1.25rem;
+  padding: 2.75rem 1.1rem 1.1rem;
   overflow-x: auto;
-  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
   line-height: 1.7;
-  color: var(--color-fg-muted);
+  color: var(--color-fg);
+  -webkit-overflow-scrolling: touch;
 }
 .prose-post pre.code-block::before {
   content: attr(data-lang);
   position: absolute;
-  top: 0.5rem;
-  left: 1rem;
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
+  inset: 0 0 auto 0;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-fg-subtle);
 }
-.prose-post pre.code-block[data-runnable] { padding-right: 5.5rem; }
-.prose-post pre.code-block code { display: block; margin-top: 0.9rem; background: none; }
+.prose-post pre.code-block code { display: block; background: none; border: none; padding: 0; }
 .prose-post .code-run {
   position: absolute;
-  top: 0.5rem;
-  right: 0.75rem;
+  top: 0.35rem;
+  right: 0.6rem;
   cursor: pointer;
   border: 1px solid var(--color-border-strong);
-  border-radius: 9999px;
-  background: var(--color-glass);
-  padding: 0.2rem 0.75rem;
-  font: inherit;
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
+  background: transparent;
+  padding: 0.3rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-fg);
-  transition: border-color 0.2s var(--ease-mechanical);
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
-.prose-post .code-run:hover:not(:disabled) { border-color: var(--color-accent); }
+.prose-post .code-run:hover:not(:disabled) {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
 .prose-post .code-run:disabled { opacity: 0.5; cursor: progress; }
 .prose-post .code-output {
-  margin-top: -0.75rem;
+  margin-top: -1px;
   border: 1px solid var(--color-border);
-  border-top: none;
-  border-radius: 0 0 1rem 1rem;
-  padding: 0.9rem 1.25rem;
-  font-size: 0.8rem;
+  border-left: 2px solid var(--color-green);
+  background: var(--color-bg);
+  padding: 0.9rem 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
   white-space: pre-wrap;
   color: var(--color-fg);
 }
@@ -326,29 +466,72 @@ body * {
 .hljs-built_in,
 .hljs-title,
 .hljs-section,
-.hljs-name { color: var(--color-fg); font-weight: 700; }
+.hljs-name { color: var(--color-amber); }
 .hljs-string,
 .hljs-attr,
 .hljs-attribute,
-.hljs-symbol { color: var(--color-fg); opacity: 0.8; }
+.hljs-symbol { color: var(--color-green); }
 .hljs-number,
 .hljs-literal,
 .hljs-meta { color: var(--color-accent); }
 
-/* Phones: backdrop blur on every card is the main cause of scroll jank, and
-   the 6%-white fill reads fine without it. The fixed navbar keeps its blur
-   since content scrolls underneath it. */
-@media (max-width: 767px) {
-  .glass-surface:not(header) {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
+/* ---------- Cursor FX (fine pointers only; see CursorFx.vue) ---------- */
+.cursor-dot,
+.cursor-ring,
+.cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
 }
-
-/* Touch devices never hover, so the cursor spotlight is dead weight there. */
-@media (hover: none) {
-  .glass-surface::before,
-  .cursor-glow-bg::before {
+.cursor-dot {
+  z-index: 150;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 9999px;
+  background: var(--color-accent);
+}
+.cursor-ring {
+  z-index: 150;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border: 1px solid var(--color-fg-muted);
+  border-radius: 9999px;
+  transition:
+    width 0.25s var(--ease-mechanical),
+    height 0.25s var(--ease-mechanical),
+    margin 0.25s var(--ease-mechanical),
+    border-color 0.25s;
+}
+.cursor-ring.big {
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-color: var(--color-accent);
+}
+.cursor-glow {
+  z-index: 0;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, var(--color-accent-soft), transparent 70%);
+}
+.cursor-on .cursor-dot,
+.cursor-on .cursor-ring {
+  opacity: 1;
+}
+.cursor-on .cursor-glow {
+  opacity: 0.8;
+}
+@media (pointer: coarse) {
+  .cursor-dot,
+  .cursor-ring,
+  .cursor-glow {
     display: none;
   }
 }
@@ -360,7 +543,26 @@ body * {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
+  .rv {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .cursor-dot,
+  .cursor-ring,
+  .cursor-glow {
+    display: none !important;
+  }
+}
+
+/* Headings stay mixed-case even where a page still carries the older
+   `uppercase` utility; small labels/buttons keep their caps. */
+h1.uppercase,
+h2.uppercase,
+h3.uppercase,
+h4.uppercase {
+  text-transform: none;
 }

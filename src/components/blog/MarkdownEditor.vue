@@ -81,15 +81,15 @@ function onPick(event: Event) {
 </script>
 
 <template>
-  <div class="glass-surface relative overflow-hidden rounded-2xl">
+  <div class="glass-surface relative overflow-hidden ">
     <div class="flex flex-wrap items-center gap-2 border-b border-border p-3">
       <div class="flex gap-1">
         <button
           v-for="name in ['write', 'preview'] as const"
           :key="name"
           type="button"
-          class="cursor-pointer rounded-sm border-none px-4 py-1.5 font-display text-xs uppercase tracking-tight transition-colors duration-200"
-          :class="tab === name ? 'bg-fg text-bg' : 'bg-transparent text-fg-muted hover:text-fg'"
+          class="cursor-pointer border-none px-4 py-1.5 font-display text-xs uppercase tracking-tight transition-colors duration-200"
+          :class="tab === name ? 'bg-accent text-white' : 'bg-transparent text-fg-muted hover:text-fg'"
           @click="tab = name"
         >
           {{ name }}
@@ -102,7 +102,7 @@ function onPick(event: Event) {
           :key="tool.label"
           type="button"
           :title="tool.title"
-          class="cursor-pointer rounded-sm border border-border bg-transparent px-3 py-1 font-sans text-xs text-fg-muted transition-colors duration-200 hover:border-border-strong hover:text-fg"
+          class="cursor-pointer border border-border bg-transparent px-3 py-1 font-sans text-xs text-fg-muted transition-colors duration-200 hover:border-border-strong hover:text-fg"
           @click="insert(tool.before, tool.after, tool.placeholder)"
         >
           {{ tool.label }}
@@ -111,7 +111,7 @@ function onPick(event: Event) {
           type="button"
           title="Upload image"
           :disabled="uploading"
-          class="cursor-pointer rounded-sm border border-border bg-transparent px-3 py-1 font-sans text-xs text-fg-muted transition-colors duration-200 hover:border-border-strong hover:text-fg disabled:opacity-50"
+          class="cursor-pointer border border-border bg-transparent px-3 py-1 font-sans text-xs text-fg-muted transition-colors duration-200 hover:border-border-strong hover:text-fg disabled:opacity-50"
           @click="fileInput?.click()"
         >
           {{ uploading ? "Uploading…" : "Image" }}

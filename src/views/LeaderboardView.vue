@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AccountTabs from "../components/ui/AccountTabs.vue";
 import { ref } from "vue";
 import Badge from "../components/ui/Badge.vue";
 import GridBar from "../components/ui/GridBar.vue";
@@ -24,12 +25,13 @@ function fullName(p: { first_name: string; last_name: string }) {
 </script>
 
 <template>
-  <div class="px-4 py-28 sm:px-6">
+  <div class="wrap py-10 md:py-16">
     <div class="mx-auto max-w-6xl">
-      <h1 class="mb-4 font-display text-3xl uppercase tracking-tight sm:text-5xl">
+      <AccountTabs />
+      <h1 class="page-title">
         Leaderboard
       </h1>
-      <p class="mb-12 max-w-xl font-sans text-sm text-fg-muted">
+      <p class="page-sub mb-10">
         Public GitHub and LeetCode stats from members and core team — ranked, honest, no fluff.
       </p>
 
@@ -46,7 +48,7 @@ function fullName(p: { first_name: string; last_name: string }) {
 
           <div
             v-if="githubEntries.length === 0"
-            class="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border-strong px-8 py-20 text-center"
+            class="flex flex-col items-center gap-4 border border-dashed border-border-strong px-8 py-20 text-center"
           >
             <HalftoneMark :size="40" :opacity="0.3" />
             <p class="font-display text-lg uppercase tracking-tight text-fg-subtle">
@@ -81,7 +83,7 @@ function fullName(p: { first_name: string; last_name: string }) {
 
           <div
             v-if="leetcodeEntries.length === 0"
-            class="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border-strong px-8 py-20 text-center"
+            class="flex flex-col items-center gap-4 border border-dashed border-border-strong px-8 py-20 text-center"
           >
             <HalftoneMark :size="40" :opacity="0.3" />
             <p class="font-display text-lg uppercase tracking-tight text-fg-subtle">
@@ -115,7 +117,7 @@ function fullName(p: { first_name: string; last_name: string }) {
           <h2 class="mb-6 font-display text-xl uppercase tracking-tight">Blog Consistency</h2>
           <div
             v-if="blogEntries.length === 0"
-            class="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border-strong px-8 py-20 text-center"
+            class="flex flex-col items-center gap-4 border border-dashed border-border-strong px-8 py-20 text-center"
           >
             <HalftoneMark :size="40" :opacity="0.3" />
             <p class="font-display text-lg uppercase tracking-tight text-fg-subtle">

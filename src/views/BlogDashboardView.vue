@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AccountTabs from "../components/ui/AccountTabs.vue";
 import { onMounted, ref } from "vue";
 import Badge from "../components/ui/Badge.vue";
 import { useAuth } from "../composables/useAuth";
@@ -51,9 +52,10 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="px-4 py-28 sm:px-6">
+  <div class="wrap py-10 md:py-16">
     <div class="mx-auto max-w-4xl">
-      <h1 class="mb-4 font-display text-3xl uppercase tracking-tight sm:text-5xl">My posts</h1>
+      <AccountTabs />
+      <h1 class="page-title">My posts</h1>
       <div class="mb-12 flex flex-wrap gap-2">
         <Badge to="/blog/write" size="sm" tone="solid" interactive arrow>New post</Badge>
         <Badge to="/blog" size="sm" interactive>Public blog</Badge>

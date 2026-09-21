@@ -61,31 +61,41 @@ onBeforeUnmount(clearJsonLd);
 </script>
 
 <template>
-  <div class="px-4 py-28 sm:px-6">
+  <div class="wrap py-10 pb-20 md:py-16 md:pb-28">
     <article class="mx-auto max-w-3xl">
-      <router-link to="/blog" class="mb-8 inline-block font-sans text-xs uppercase tracking-wide text-fg-subtle transition-colors hover:text-fg">
+      <router-link
+        to="/blog"
+        class="group mb-9 inline-flex min-h-10 items-center gap-2 font-mono text-[12.5px] text-fg-muted uppercase transition-[color,gap] duration-200 hover:gap-3 hover:text-fg"
+      >
         &larr; All posts
       </router-link>
 
-      <p v-if="loading" class="font-sans text-sm text-fg-subtle">Loading…</p>
+      <p v-if="loading" class="font-mono text-xs text-fg-subtle uppercase">Loading&hellip;</p>
 
-      <div v-else-if="notFound" class="rounded-2xl border border-dashed border-border-strong px-8 py-20 text-center">
-        <p class="font-display text-lg uppercase tracking-tight text-fg-subtle">Post not found.</p>
-      </div>
+      <div v-else-if="notFound" class="empty-state">Post not found.</div>
 
       <template v-else-if="post">
-        <Badge v-if="post.status !== 'published'" as="p" size="sm" class="mb-6 text-accent">
+        <p
+          v-if="post.status !== 'published'"
+          class="mb-6 inline-block border border-accent-dim bg-accent-soft px-3 py-1.5 font-mono text-[11.5px] text-accent uppercase"
+        >
           {{ post.status === "pending" ? "Awaiting review" : "Draft" }} &mdash; not public
-        </Badge>
+        </p>
 
-        <h1 class="mb-4 font-display text-3xl uppercase leading-tight tracking-tight sm:text-5xl">
+        <h1 class="mb-5 text-[clamp(2rem,7vw,3.4rem)] leading-[1.08] font-bold tracking-[-0.02em] wrap-break-word">
           {{ post.title }}
         </h1>
-        <p class="mb-8 font-sans text-xs text-fg-subtle">
-          @{{ post.author }} · {{ formatDate(post.date) }} · {{ post.readingMinutes }} min read
+        <p class="mb-5 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[12.5px] text-fg-subtle">
+          <span>@{{ post.author }}</span><span class="text-border-strong">·</span>
+          <span>{{ formatDate(post.date) }}</span><span class="text-border-strong">·</span>
+          <span>{{ post.readingMinutes }} min read</span>
         </p>
-        <div v-if="post.tags.length" class="mb-8 flex flex-wrap gap-2">
-          <span v-for="tag in post.tags" :key="tag" class="rounded-sm border border-border px-3 py-1 font-sans text-xs text-fg-subtle">
+        <div v-if="post.tags.length" class="mb-9 flex flex-wrap gap-2">
+          <span
+            v-for="tag in post.tags"
+            :key="tag"
+            class="border border-border px-3 py-1.5 font-mono text-[11.5px] text-fg-muted transition-[border-color,color] duration-200 hover:border-accent hover:text-fg"
+          >
             {{ tag }}
           </span>
         </div>
@@ -93,13 +103,14 @@ onBeforeUnmount(clearJsonLd);
           v-if="post.cover"
           :src="post.cover"
           :alt="post.title"
-          class="mb-10 aspect-video w-full rounded-2xl border border-border object-cover"
+          decoding="async"
+          class="mb-10 aspect-video w-full border border-border object-cover"
         />
 
         <PostBody :html="html" />
 
-        <div v-if="canEdit" class="mt-12">
-          <Badge :to="`/blog/edit/${post.slug}`" size="sm" interactive>Edit post</Badge>
+        <div v-if="canEdit" class="mt-12 flex items-center gap-3 border-t border-border pt-8">
+          <Badge :to="`/blog/edit/${post.slug}`" interactive>Edit post</Badge>
         </div>
       </template>
     </article>

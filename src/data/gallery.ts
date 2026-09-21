@@ -7,6 +7,10 @@ export interface GalleryItem {
   alt: string;
   /** ISO date string (e.g. "2026-03-14") — shown as the tile's caption date. */
   date?: string;
+  /** Optional filter bucket, e.g. "hackathon", "workshop", "talk", "social".
+   *  The filter bar on the Gallery page is built from whatever is used here
+   *  and hidden entirely when no item sets it. */
+  category?: string;
 }
 
 // Empty-state-first: zero real photos yet. The grid renders placeholder
@@ -21,5 +25,6 @@ export interface GalleryItem {
 //      image: "/gallery/build-night.jpg",
 //      alt: "Members working on laptops during the first build night",
 //      date: "2026-03-14",
+//      category: "social",
 //    }
 export const galleryItems: GalleryItem[] = [];

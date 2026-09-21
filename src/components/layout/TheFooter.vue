@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import Badge from "../ui/Badge.vue";
-import GridBar from "../ui/GridBar.vue";
-import smallWhite from "../../assets/transparent/big_white.png";
+import bigWhite from "../../assets/brand/wordmark.webp";
 
 const links = [
   { to: "/gallery", label: "Gallery" },
@@ -16,51 +14,32 @@ const socials = [
   { label: "Discord", href: "#" },
   { label: "LinkedIn", href: "#" },
 ];
+
+const chip =
+  "border border-border px-3 py-2.5 font-mono text-xs uppercase text-fg-muted transition-[background-color,border-color,color,translate] duration-200 hover:-translate-y-0.5 hover:border-fg hover:bg-fg hover:text-bg";
 </script>
 
 <template>
-  <footer class="relative">
-    <GridBar />
-    <div class="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12 sm:px-6">
-      <div class="flex flex-col items-start justify-between gap-8 sm:flex-row">
-        <div class="flex items-center gap-3">
-          <img :src="smallWhite" alt="Logic Play" class="brand-mark h-9 w-auto" />
-          <!-- <HalftoneMark :size="18" :opacity="0.4" color="var(--color-accent)" /> -->
-        </div>
+  <footer class="relative z-10 border-t border-border py-10">
+    <div class="wrap">
+      <div class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+        <router-link to="/" class="flex items-center gap-2.5 border border-fg px-2.5 py-1.5" aria-label="Logic Play home">
+          <span class="h-1.5 w-1.5 rounded-full bg-accent" />
+          <img :src="bigWhite" alt="Logic Play" width="75" height="16" class="brand-mark h-4 w-auto" loading="lazy" />
+        </router-link>
 
-        <nav class="flex flex-wrap gap-2">
-          <Badge
-            v-for="link in links"
-            :key="link.to"
-            :to="link.to"
-            size="sm"
-            interactive
-          >
-            {{ link.label }}
-          </Badge>
+        <nav class="flex flex-wrap gap-2.5" aria-label="Footer">
+          <router-link v-for="link in links" :key="link.to" :to="link.to" :class="chip">{{ link.label }}</router-link>
         </nav>
 
-        <div class="flex flex-wrap gap-2">
-          <Badge
-            v-for="social in socials"
-            :key="social.label"
-            as="a"
-            :href="social.href"
-            size="sm"
-            interactive
-          >
-            {{ social.label }}
-          </Badge>
+        <div class="flex flex-wrap gap-2.5">
+          <a v-for="s in socials" :key="s.label" :href="s.href" target="_blank" rel="noopener" :class="chip">{{ s.label }}</a>
         </div>
       </div>
 
-      <div
-        class="flex flex-col gap-2 border-t border-border pt-6 font-sans text-xs text-fg-subtle sm:flex-row sm:items-center sm:justify-between"
-      >
-        <p>
-          &copy; {{ new Date().getFullYear() }} Logic Play. All rights reserved.
-        </p>
-        <p>Built by people who ship.</p>
+      <div class="mt-6 flex flex-col gap-2 font-mono text-[11.5px] text-fg-subtle sm:flex-row sm:justify-between">
+        <span>&copy; {{ new Date().getFullYear() }} Logic Play. All rights reserved.</span>
+        <span>Built by people who ship.</span>
       </div>
     </div>
   </footer>

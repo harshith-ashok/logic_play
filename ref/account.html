@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account — Logic Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0908; --bg-raised:#121110; --bg-field:#171614; --line:#262421; --line-strong:#3a3733;
+    --text:#f2efe9; --text-dim:#948e84; --text-faint:#56514a;
+    --red:#ff3d2e; --red-dim:#7a2a22; --green:#7ee08a; --amber:#e8b04b; --cyan:#4be0e0;
+    --wrap:920px; --ease:cubic-bezier(.16,1,.3,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Space Grotesk',sans-serif; -webkit-font-smoothing:antialiased; line-height:1.5; overflow-x:hidden; }
+  ::selection{ background:var(--red); color:#0a0908; }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; cursor:pointer; }
+  input{ font-family:inherit; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .loader{ position:fixed; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; transition:opacity .6s var(--ease), visibility .6s; }
+  .loader.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+  .loader-mark{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:clamp(1.4rem,4vw,2rem); letter-spacing:.08em; display:flex; gap:2px; overflow:hidden; }
+  .loader-mark span{ display:inline-block; transform:translateY(110%); animation: loaderUp .7s var(--spring) forwards; }
+  .loader-bar{ position:absolute; bottom:0; left:0; height:2px; background:var(--red); width:0%; animation: loaderBar 1.5s var(--ease) forwards; }
+  @keyframes loaderUp{ to{ transform:translateY(0); } }
+  @keyframes loaderBar{ 0%{width:0%} 100%{width:100%} }
+
+  .cursor-dot,.cursor-ring{ position:fixed; top:0; left:0; pointer-events:none; z-index:150; border-radius:50%; transform:translate(-50%,-50%); }
+  .cursor-dot{ width:6px; height:6px; background:var(--red); }
+  .cursor-ring{ width:34px; height:34px; border:1px solid var(--text-dim); transition:width .25s var(--ease),height .25s var(--ease),border-color .25s; }
+  .cursor-ring.big{ width:60px; height:60px; border-color:var(--red); }
+  @media (pointer:coarse){ .cursor-dot,.cursor-ring{ display:none; } }
+
+  .grid-bg{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:90px 90px; opacity:.28;
+    -webkit-mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, black 25%, transparent 80%);
+            mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, black 25%, transparent 80%);
+    animation: gridDrift 30s linear infinite;
+  }
+  @keyframes gridDrift{ 0%{background-position:0 0;} 100%{background-position:90px 180px;} }
+
+  header, main, footer{ position:relative; z-index:1; }
+  .wrap{ max-width:var(--wrap); margin:0 auto; padding:0 32px; }
+  .wrap-wide{ max-width:1180px; margin:0 auto; padding:0 32px; }
+
+  header{ position:sticky; top:0; z-index:50; background:rgba(10,9,8,.82); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+    transform:translateY(-100%); animation: headerDrop .7s .1s var(--spring) forwards; }
+  @keyframes headerDrop{ to{ transform:translateY(0); } }
+  .nav{ display:flex; align-items:center; justify-content:space-between; height:64px; }
+  .wordmark{ display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono', monospace; font-weight:700; font-size:15px; border:1px solid var(--text); padding:5px 10px; transition: transform .3s var(--spring), background .3s, color .3s; }
+  .wordmark:hover{ transform:scale(1.05) rotate(-1deg); background:var(--text); color:var(--bg); }
+  .wordmark .dot{ width:6px; height:6px; background:var(--red); border-radius:50%; animation: dotPulse 1.6s ease-in-out infinite; }
+  @keyframes dotPulse{ 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.7);opacity:.5;} }
+  .nav-links{ display:flex; gap:28px; list-style:none; margin:0; padding:0; }
+  .nav-links a{ font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--text-dim); display:flex; gap:6px; align-items:baseline; position:relative; padding:4px 0; transition: color .25s var(--ease), transform .25s var(--spring); }
+  .nav-links a .idx{ color:var(--text-faint); transition: color .25s; }
+  .nav-links a::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:1px; background:var(--red); transform:scaleX(0); transform-origin:left; transition: transform .35s var(--spring); }
+  .nav-links a:hover, .nav-links a.active{ color:var(--text); transform:translateY(-2px); }
+  .nav-links a:hover .idx{ color:var(--red); }
+  .nav-links a:hover::after, .nav-links a.active::after{ transform:scaleX(1); }
+  .nav-actions{ display:flex; align-items:center; gap:10px; }
+  .icon-btn{ width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--line); background:transparent; color:var(--text-dim); transition: border-color .2s, color .2s, transform .4s var(--spring); }
+  .icon-btn:hover{ border-color:var(--text-dim); color:var(--text); transform:rotate(180deg); }
+  .btn{ font-family:'JetBrains Mono', monospace; font-size:12.5px; font-weight:600; padding:9px 16px; border:1px solid var(--text); background:transparent; color:var(--text); display:inline-flex; align-items:center; gap:8px; transition: transform .25s var(--spring), box-shadow .3s, background .2s, color .2s; }
+  .btn-red{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn-red:hover{ transform:translateY(-3px) scale(1.03); box-shadow:0 10px 30px -8px rgba(255,61,46,.6); }
+  .mobile-toggle{ display:none; }
+
+  .reveal{ opacity:0; transform:translateY(24px); transition: opacity .6s var(--ease), transform .6s var(--ease); transition-delay: var(--d,0s); }
+  .reveal.visible{ opacity:1; transform:none; }
+
+  /* ---- account header ---- */
+  .acct-hero{ padding: 64px 0 0; }
+  .acct-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap; }
+  .avatar-wrap{ display:flex; align-items:center; gap:22px; }
+  .avatar-btn{
+    width:76px; height:76px; border-radius:50%; border:1px solid var(--line-strong);
+    background: linear-gradient(135deg, var(--red-dim), #1a1816);
+    display:grid; place-items:center; position:relative; overflow:hidden; flex-shrink:0;
+    transition: transform .3s var(--spring), border-color .3s;
+  }
+  .avatar-btn:hover{ transform: scale(1.05); border-color: var(--red); }
+  .avatar-btn img{ width:100%; height:100%; object-fit:cover; }
+  .avatar-btn .initials{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:1.4rem; }
+  .avatar-btn .edit-hint{
+    position:absolute; inset:0; background: rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace; font-size:9px; letter-spacing:.05em; color:#fff;
+    opacity:0; transition: opacity .25s;
+  }
+  .avatar-btn:hover .edit-hint{ opacity:1; }
+
+  .page-title{ font-size: clamp(2rem, 5vw, 3rem); font-weight:700; letter-spacing:-.02em; margin:0 0 6px; }
+  .acct-meta{ font-family:'JetBrains Mono', monospace; font-size:13px; color:var(--text-faint); }
+  .acct-meta b{ color: var(--text-dim); font-weight:500; }
+
+  /* ---- tabs ---- */
+  .tabbar{ display:flex; gap:8px; margin: 42px 0 0; flex-wrap:wrap; }
+  .tab{
+    font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:600; letter-spacing:.03em;
+    border:1px solid var(--line); background:transparent; color:var(--text-dim); padding:10px 16px;
+    transition: border-color .25s, color .25s, background .25s, transform .2s var(--spring);
+  }
+  .tab:hover{ transform:translateY(-2px); color:var(--text); }
+  .tab.active{ background:var(--text); color:var(--bg); border-color:var(--text); }
+
+  .panel{ display:none; padding: 36px 0 90px; }
+  .panel.active{ display:block; }
+
+  /* ---- form ---- */
+  .card{ border:1px solid var(--line); background: var(--bg-raised); padding: 40px; }
+  .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+  .field{ margin-bottom: 26px; }
+  .field label{ display:block; font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint); letter-spacing:.06em; margin-bottom:9px; }
+  .field input{
+    width:100%; background: var(--bg-field); border:1px solid var(--line-strong); color:var(--text);
+    padding: 12px 14px; font-size:14.5px; transition: border-color .2s, box-shadow .2s, background .2s;
+  }
+  .field input:focus-visible{ outline:none; border-color: var(--red); box-shadow: 0 0 0 3px rgba(255,61,46,.18); }
+  .field.invalid input{ border-color: var(--red); animation: shake .35s; }
+  .field .err{ display:none; font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--red); margin-top:7px; }
+  .field.invalid .err{ display:block; }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-5px);} 75%{transform:translateX(5px);} }
+
+  .form-footer{ display:flex; align-items:center; gap:16px; justify-content:flex-end; margin-top:8px; flex-wrap:wrap; }
+  .dirty-pill{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--amber);
+    border:1px solid var(--amber); padding:6px 12px; opacity:0; transform: translateY(4px);
+    transition: opacity .25s, transform .25s;
+  }
+  .dirty-pill.show{ opacity:1; transform:none; }
+  .save-btn{
+    font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:700; padding:12px 22px;
+    background: var(--text); color: var(--bg); border:none; display:inline-flex; align-items:center; gap:8px;
+    transition: background .25s, transform .2s var(--spring);
+  }
+  .save-btn:hover{ background: var(--red); color:#fff; transform: translateY(-2px); }
+  .save-btn.success{ background: var(--green); color:#0a0908; }
+  .save-toast{
+    font-family:'JetBrains Mono', monospace; font-size:12px; color: var(--green);
+    opacity:0; transform: translateY(4px); transition: opacity .3s, transform .3s;
+  }
+  .save-toast.show{ opacity:1; transform:none; }
+
+  /* ---- my posts ---- */
+  .post-row{
+    display:flex; justify-content:space-between; align-items:center; gap:16px;
+    border:1px solid var(--line); padding: 20px 22px; margin-bottom:10px;
+    background: var(--bg-raised); transition: opacity .35s, transform .35s;
+  }
+  .post-row.removing{ opacity:0; transform: translateX(30px); }
+  .post-row h4{ margin:0 0 4px; font-size:1rem; }
+  .post-row .meta{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint); }
+  .row-actions{ display:flex; gap:8px; }
+  .icon-mini{
+    width:32px; height:32px; border:1px solid var(--line-strong); background:transparent; color:var(--text-dim);
+    display:grid; place-items:center; transition: border-color .2s, color .2s, transform .2s var(--spring);
+  }
+  .icon-mini:hover{ border-color: var(--red); color: var(--red); transform: translateY(-2px); }
+  .empty-state{ text-align:center; padding: 50px 20px; color: var(--text-faint); font-family:'JetBrains Mono', monospace; font-size:13px; border:1px dashed var(--line); }
+
+  /* ---- leaderboard ---- */
+  .lb-row{
+    display:grid; grid-template-columns: 40px 1fr auto; gap:16px; align-items:center;
+    padding: 16px 20px; border-bottom:1px solid var(--line);
+  }
+  .lb-row.me{ background: rgba(255,61,46,.06); border-left:2px solid var(--red); }
+  .lb-rank{ font-family:'JetBrains Mono', monospace; color:var(--text-faint); font-size:13px; }
+  .lb-name{ font-weight:600; }
+  .lb-name .you{ color: var(--red); font-family:'JetBrains Mono', monospace; font-size:10.5px; margin-left:8px; }
+  .lb-pts{ font-family:'JetBrains Mono', monospace; font-size:13px; color: var(--amber); }
+
+  /* ---- events attended ---- */
+  .ea-row{
+    display:flex; justify-content:space-between; align-items:center; gap:16px;
+    padding: 18px 22px; border:1px solid var(--line); margin-bottom:10px; background: var(--bg-raised);
+  }
+  .ea-row h4{ margin:0 0 4px; font-size:.98rem; }
+  .ea-row .meta{ font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint); }
+  .badge-going{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color: var(--green); border:1px solid var(--green); padding:5px 10px; white-space:nowrap; }
+  .badge-done{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color: var(--text-faint); border:1px solid var(--line-strong); padding:5px 10px; white-space:nowrap; }
+
+  footer{ border-top:1px solid var(--line); padding:40px 0; }
+  .foot-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; }
+  .foot-links{ display:flex; gap:10px; }
+  .foot-links a{ font-family:'JetBrains Mono', monospace; font-size:12px; border:1px solid var(--line); padding:8px 12px; color:var(--text-dim); transition: all .25s var(--spring); }
+  .foot-links a:hover{ border-color:var(--text); color:var(--bg); background:var(--text); transform:translateY(-3px); }
+
+  :focus-visible{ outline:2px solid var(--red); outline-offset:2px; }
+
+  @media (max-width:880px){
+    .nav-links{ position:fixed; inset:64px 0 0 0; background:var(--bg); flex-direction:column; padding:30px 24px; gap:0; transform:translateY(-8px); opacity:0; pointer-events:none; transition: opacity .25s var(--ease), transform .25s var(--ease); border-top:1px solid var(--line); }
+    .nav-links.open{ opacity:1; transform:none; pointer-events:auto; }
+    .nav-links a{ padding:16px 0; border-bottom:1px solid var(--line); font-size:14px; }
+    .mobile-toggle{ display:grid; place-items:center; width:34px; height:34px; border:1px solid var(--line); background:none; color:var(--text); }
+    .grid2{ grid-template-columns: 1fr; }
+  }
+  @media (max-width:560px){
+    .wrap{ padding:0 20px; }
+    .card{ padding: 26px 20px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+    .reveal{ opacity:1 !important; transform:none !important; }
+    .loader{ display:none !important; }
+    .cursor-dot,.cursor-ring{ display:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="loader-mark mono">
+    <span style="animation-delay:.02s">L</span><span style="animation-delay:.06s">O</span><span style="animation-delay:.10s">G</span><span style="animation-delay:.14s">I</span><span style="animation-delay:.18s">C</span><span style="animation-delay:.22s">&nbsp;</span><span style="animation-delay:.26s">P</span><span style="animation-delay:.30s">L</span><span style="animation-delay:.34s">A</span><span style="animation-delay:.38s">Y</span>
+  </div>
+  <div class="loader-bar"></div>
+</div>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="grid-bg"></div>
+
+<header>
+  <div class="wrap-wide nav">
+    <a href="index.html" class="wordmark"><span class="dot"></span>LOGIC PLAY</a>
+    <nav>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html"><span class="idx">01</span>HOME</a></li>
+        <li><a href="gallery.html"><span class="idx">02</span>GALLERY</a></li>
+        <li><a href="events.html"><span class="idx">03</span>EVENTS</a></li>
+        <li><a href="blog.html"><span class="idx">04</span>BLOG</a></li>
+        <li><a href="index.html#team"><span class="idx">05</span>TEAM</a></li>
+      </ul>
+    </nav>
+    <div class="nav-actions">
+      <a href="index.html#join" class="btn btn-red">JOIN →</a>
+      <button class="icon-btn mobile-toggle" id="mobileToggle" aria-label="Open menu" aria-expanded="false">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap acct-hero">
+    <div class="acct-top reveal">
+      <div class="avatar-wrap">
+        <button class="avatar-btn" id="avatarBtn" aria-label="Change profile photo">
+          <span class="initials mono" id="avatarInitials">HA</span>
+          <img id="avatarImg" style="display:none;" alt="">
+          <span class="edit-hint">CHANGE</span>
+        </button>
+        <input type="file" id="avatarInput" accept="image/*" hidden>
+        <div>
+          <h1 class="page-title">Account</h1>
+          <div class="acct-meta"><b id="acctHandle">harshith_ashok</b> · Core Team</div>
+        </div>
+      </div>
+      <button class="btn ghost" id="logoutBtn">LOG OUT</button>
+    </div>
+
+    <div class="tabbar reveal" style="--d:.08s">
+      <button class="tab active" data-panel="admin">ADMIN</button>
+      <button class="tab" data-panel="posts">MY POSTS</button>
+      <button class="tab" data-panel="leaderboard">LEADERBOARD</button>
+      <button class="tab" data-panel="attended">EVENTS ATTENDED</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- ADMIN -->
+    <div class="panel active" id="panel-admin">
+      <div class="card reveal">
+        <div class="grid2">
+          <div class="field" id="f-first">
+            <label>FIRST NAME</label>
+            <input type="text" id="firstName" value="Harshith">
+            <div class="err">First name is required.</div>
+          </div>
+          <div class="field" id="f-last">
+            <label>LAST NAME</label>
+            <input type="text" id="lastName" value="Ashok">
+            <div class="err">Last name is required.</div>
+          </div>
+          <div class="field" id="f-reg">
+            <label>REGISTRATION NUMBER</label>
+            <input type="text" id="regNumber" value="RA2411003020167">
+            <div class="err">Enter a valid registration number.</div>
+          </div>
+          <div class="field" id="f-user">
+            <label>USERNAME</label>
+            <input type="text" id="username" value="harshith_ashok">
+            <div class="err">Username can't contain spaces.</div>
+          </div>
+          <div class="field" id="f-github">
+            <label>GITHUB USERNAME</label>
+            <input type="text" id="github" value="harshith-ashok">
+            <div class="err">Only letters, numbers and hyphens.</div>
+          </div>
+          <div class="field" id="f-leetcode">
+            <label>LEETCODE USERNAME</label>
+            <input type="text" id="leetcode" value="harshith-ashok">
+            <div class="err">Only letters, numbers and hyphens.</div>
+          </div>
+        </div>
+        <div class="field" id="f-linkedin">
+          <label>LINKEDIN URL</label>
+          <input type="text" id="linkedin" value="https://www.linkedin.com/in/harshith-ashok/">
+          <div class="err">Must be a full https:// linkedin.com URL.</div>
+        </div>
+
+        <div class="form-footer">
+          <span class="save-toast mono" id="saveToast">✓ saved</span>
+          <span class="dirty-pill mono" id="dirtyPill">UNSAVED CHANGES</span>
+          <button class="save-btn" id="saveBtn">SAVE CHANGES →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY POSTS -->
+    <div class="panel" id="panel-posts">
+      <div id="postsList"></div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="panel" id="panel-leaderboard">
+      <div class="card reveal" style="padding:10px 0;">
+        <div id="lbList"></div>
+      </div>
+    </div>
+
+    <!-- EVENTS ATTENDED -->
+    <div class="panel" id="panel-attended">
+      <h3 class="mono" style="font-size:12px; color:var(--text-faint); letter-spacing:.06em; margin-bottom:16px;">UPCOMING — YOUR RSVPS</h3>
+      <div id="rsvpList" style="margin-bottom:36px;"></div>
+      <h3 class="mono" style="font-size:12px; color:var(--text-faint); letter-spacing:.06em; margin-bottom:16px;">PAST — ATTENDED</h3>
+      <div id="pastList"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap-wide">
+    <div class="foot-row">
+      <a href="index.html" class="wordmark"><span class="dot"></span>LOGIC PLAY</a>
+      <div class="foot-links">
+        <a href="gallery.html">GALLERY</a>
+        <a href="events.html">EVENTS</a>
+        <a href="index.html#team">TEAM</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  window.addEventListener('load', () => {
+    const loader = document.getElementById('loader');
+    setTimeout(() => loader.classList.add('hide'), reduce ? 0 : 900);
+  });
+
+  const mobileToggle = document.getElementById('mobileToggle');
+  const navLinks = document.getElementById('navLinks');
+  mobileToggle.addEventListener('click', () => {
+    const open = navLinks.classList.toggle('open');
+    mobileToggle.setAttribute('aria-expanded', open);
+  });
+
+  const revealEls = document.querySelectorAll('.reveal');
+  if(reduce){ revealEls.forEach(el => el.classList.add('visible')); }
+  else{
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { threshold:.1 });
+    revealEls.forEach(el => io.observe(el));
+  }
+
+  if(!reduce && window.matchMedia('(pointer:fine)').matches){
+    const dot = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    window.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; dot.style.left=mx+'px'; dot.style.top=my+'px'; });
+    (function loop(){ rx+=(mx-rx)*0.16; ry+=(my-ry)*0.16; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(loop); })();
+    document.querySelectorAll('a, button, input').forEach(el => {
+      el.addEventListener('mouseenter', () => ring.classList.add('big'));
+      el.addEventListener('mouseleave', () => ring.classList.remove('big'));
+    });
+  }
+
+  // ---- tabs ----
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+    });
+  });
+
+  // ---- avatar upload (downscaled + stored locally) ----
+  const AVATAR_KEY = 'logicplay_avatar_v1';
+  const avatarBtn = document.getElementById('avatarBtn');
+  const avatarInput = document.getElementById('avatarInput');
+  const avatarImg = document.getElementById('avatarImg');
+  const avatarInitials = document.getElementById('avatarInitials');
+
+  function showAvatar(dataUrl){
+    avatarImg.src = dataUrl;
+    avatarImg.style.display = 'block';
+    avatarInitials.style.display = 'none';
+  }
+  try{
+    const saved = localStorage.getItem(AVATAR_KEY);
+    if(saved) showAvatar(saved);
+  }catch(e){}
+
+  avatarBtn.addEventListener('click', () => avatarInput.click());
+  avatarInput.addEventListener('change', () => {
+    const file = avatarInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const size = 128;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const side = Math.min(img.width, img.height);
+        ctx.drawImage(img, (img.width-side)/2, (img.height-side)/2, side, side, 0, 0, size, size);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        showAvatar(dataUrl);
+        try{ localStorage.setItem(AVATAR_KEY, dataUrl); }catch(e){ /* storage full — preview still shown this session */ }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // ---- admin form: validation + dirty state + save ----
+  const ACCOUNT_KEY = 'logicplay_account_v1';
+  const fields = {
+    firstName: { el: document.getElementById('firstName'), wrap: document.getElementById('f-first'),
+      test: v => v.trim().length > 0 },
+    lastName: { el: document.getElementById('lastName'), wrap: document.getElementById('f-last'),
+      test: v => v.trim().length > 0 },
+    regNumber: { el: document.getElementById('regNumber'), wrap: document.getElementById('f-reg'),
+      test: v => v.trim().length >= 6 },
+    username: { el: document.getElementById('username'), wrap: document.getElementById('f-user'),
+      test: v => /^\S+$/.test(v.trim()) && v.trim().length > 0 },
+    github: { el: document.getElementById('github'), wrap: document.getElementById('f-github'),
+      test: v => v.trim() === '' || /^[A-Za-z0-9-]+$/.test(v.trim()) },
+    leetcode: { el: document.getElementById('leetcode'), wrap: document.getElementById('f-leetcode'),
+      test: v => v.trim() === '' || /^[A-Za-z0-9-]+$/.test(v.trim()) },
+    linkedin: { el: document.getElementById('linkedin'), wrap: document.getElementById('f-linkedin'),
+      test: v => v.trim() === '' || /^https:\/\/(www\.)?linkedin\.com\/.+/.test(v.trim()) }
+  };
+
+  function currentValues(){
+    const out = {};
+    Object.keys(fields).forEach(k => out[k] = fields[k].el.value);
+    return out;
+  }
+  function loadSavedAccount(){
+    try{
+      const raw = localStorage.getItem(ACCOUNT_KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(e){ return null; }
+  }
+  let savedSnapshot = loadSavedAccount();
+  if(savedSnapshot){
+    Object.keys(fields).forEach(k => { if(savedSnapshot[k] !== undefined) fields[k].el.value = savedSnapshot[k]; });
+  } else {
+    savedSnapshot = currentValues();
+  }
+  document.getElementById('acctHandle').textContent = fields.username.el.value;
+  avatarInitials.textContent = ((fields.firstName.el.value[0]||'') + (fields.lastName.el.value[0]||'')).toUpperCase();
+
+  const dirtyPill = document.getElementById('dirtyPill');
+  const saveToast = document.getElementById('saveToast');
+  const saveBtn = document.getElementById('saveBtn');
+
+  function checkDirty(){
+    const cur = currentValues();
+    const dirty = Object.keys(cur).some(k => cur[k] !== savedSnapshot[k]);
+    dirtyPill.classList.toggle('show', dirty);
+    if(dirty) saveToast.classList.remove('show');
+  }
+  Object.values(fields).forEach(f => f.el.addEventListener('input', checkDirty));
+
+  saveBtn.addEventListener('click', () => {
+    let allValid = true;
+    Object.entries(fields).forEach(([key, f]) => {
+      const valid = f.test(f.el.value);
+      f.wrap.classList.toggle('invalid', !valid);
+      if(!valid) allValid = false;
+    });
+    if(!allValid){
+      const firstInvalid = document.querySelector('.field.invalid input');
+      if(firstInvalid) firstInvalid.focus();
+      return;
+    }
+    savedSnapshot = currentValues();
+    try{ localStorage.setItem(ACCOUNT_KEY, JSON.stringify(savedSnapshot)); }catch(e){}
+    document.getElementById('acctHandle').textContent = fields.username.el.value;
+    avatarInitials.textContent = ((fields.firstName.el.value[0]||'') + (fields.lastName.el.value[0]||'')).toUpperCase();
+    dirtyPill.classList.remove('show');
+    saveToast.classList.add('show');
+    saveBtn.classList.add('success');
+    const original = saveBtn.textContent;
+    saveBtn.textContent = 'SAVED ✓';
+    setTimeout(() => { saveBtn.classList.remove('success'); saveBtn.textContent = original; }, 1800);
+    setTimeout(() => saveToast.classList.remove('show'), 3000);
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    window.location.href = 'index.html';
+  });
+
+  // ---- my posts (mock, deletable) ----
+  let myPosts = [
+    { id:1, title:'Welcome', meta:'Sep 19, 2026 · 1 min read' },
+    { id:2, title:'Notes from the GenAI Hackathon', meta:'Oct 20, 2026 · 3 min read' },
+    { id:3, title:'Why we switched our stack to uv',  meta:'Nov 2, 2026 · 2 min read' }
+  ];
+  const postsList = document.getElementById('postsList');
+  function renderPosts(){
+    postsList.innerHTML = '';
+    if(myPosts.length === 0){
+      postsList.innerHTML = '<div class="empty-state">No posts yet. Head to the blog to write your first one.</div>';
+      return;
+    }
+    myPosts.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'post-row';
+      row.innerHTML = `
+        <div>
+          <h4>${p.title}</h4>
+          <div class="meta">${p.meta}</div>
+        </div>
+        <div class="row-actions">
+          <a class="icon-mini" href="blog.html" aria-label="Edit post" title="Edit">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </a>
+          <button class="icon-mini" data-id="${p.id}" aria-label="Delete post" title="Delete">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+          </button>
+        </div>`;
+      postsList.appendChild(row);
+    });
+    postsList.querySelectorAll('button.icon-mini').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('.post-row');
+        row.classList.add('removing');
+        setTimeout(() => {
+          myPosts = myPosts.filter(p => p.id !== Number(btn.dataset.id));
+          renderPosts();
+        }, reduce ? 0 : 320);
+      });
+    });
+  }
+  renderPosts();
+
+  // ---- leaderboard (mock) ----
+  const leaderboard = [
+    { name:'Manoj Kanna', handle:'manoj_kanna', pts: 1420 },
+    { name:'Archita', handle:'archita', pts: 1290 },
+    { name:'Harshith Ashok', handle:'harshith_ashok', pts: 1180 },
+    { name:'Tharun', handle:'tharun', pts: 1105 },
+    { name:'Srinideesh', handle:'srinideesh', pts: 960 },
+    { name:'Kshama', handle:'kshama', pts: 875 },
+    { name:'Priyanga', handle:'priyanga', pts: 790 }
+  ].sort((a,b) => b.pts - a.pts);
+
+  const lbList = document.getElementById('lbList');
+  leaderboard.forEach((row, i) => {
+    const me = row.handle === fields.username.el.value.trim();
+    const div = document.createElement('div');
+    div.className = 'lb-row' + (me ? ' me' : '');
+    div.innerHTML = `
+      <span class="lb-rank">#${i+1}</span>
+      <span class="lb-name">${row.name}${me ? '<span class="you">YOU</span>' : ''}</span>
+      <span class="lb-pts">${row.pts.toLocaleString()} PTS</span>`;
+    lbList.appendChild(div);
+  });
+
+  // ---- events attended (reads RSVPs saved from events.html) ----
+  const EVENTS = {
+    'rag-build-weekend': { title:'Build Weekend: RAG in a Day', date:'4 Oct 2026' },
+    'genai-hackathon-2026': { title:'GenAI Hackathon 2026', date:'18 Oct 2026' },
+    'pytorch-workshop': { title:'Intro to PyTorch, Hands-On', date:'8 Nov 2026' }
+  };
+  const PAST_ATTENDED = [
+    { title:'Vision Sprint Hackathon', date:'14 Aug 2026' },
+    { title:'LLM Fine-Tuning Bootcamp', date:'21 Jul 2026' }
+  ];
+  function getRsvps(){ try{ return JSON.parse(localStorage.getItem('logicplay_rsvp_v1')) || {}; }catch(e){ return {}; } }
+
+  const rsvpList = document.getElementById('rsvpList');
+  const rsvps = getRsvps();
+  const goingIds = Object.keys(rsvps).filter(id => rsvps[id]);
+  if(goingIds.length === 0){
+    rsvpList.innerHTML = `<div class="empty-state">No upcoming RSVPs yet. <a href="events.html" style="color:var(--red);">Browse events →</a></div>`;
+  } else {
+    goingIds.forEach(id => {
+      const ev = EVENTS[id];
+      if(!ev) return;
+      const row = document.createElement('div');
+      row.className = 'ea-row';
+      row.innerHTML = `<div><h4>${ev.title}</h4><div class="meta">${ev.date}</div></div><span class="badge-going">GOING</span>`;
+      rsvpList.appendChild(row);
+    });
+  }
+
+  const pastList = document.getElementById('pastList');
+  PAST_ATTENDED.forEach(ev => {
+    const row = document.createElement('div');
+    row.className = 'ea-row';
+    row.innerHTML = `<div><h4>${ev.title}</h4><div class="meta">${ev.date}</div></div><span class="badge-done">ATTENDED</span>`;
+    pastList.appendChild(row);
+  });
+</script>
+
+</body>
+</html>

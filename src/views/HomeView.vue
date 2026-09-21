@@ -1,32 +1,36 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import { gsap } from "gsap";
 import Badge from "../components/ui/Badge.vue";
-import GridBar from "../components/ui/GridBar.vue";
-import HalftoneMark from "../components/ui/HalftoneMark.vue";
-import TeamCard from "../components/ui/TeamCard.vue";
+import Marquee from "../components/ui/Marquee.vue";
+import TeamGrid from "../components/ui/TeamGrid.vue";
+import { useCountUp } from "../composables/useCountUp";
 import { useScrollReveal } from "../composables/useScrollReveal";
-import { useTeamMembers } from "../composables/useTeamMembers";
 import { useSiteSettings } from "../composables/useSiteSettings";
-import { perks } from "../data/perks";
+import { useTeamMembers } from "../composables/useTeamMembers";
 import { domains, type Domain } from "../data/domains";
-import smallWhite from "../assets/transparent/small_white.png";
+import { perks } from "../data/perks";
+import { stats } from "../data/stats";
 
 const { members } = useTeamMembers();
 const { settings } = useSiteSettings();
 
-const hero = ref<HTMLElement | null>(null);
+const statsEl = ref<HTMLElement | null>(null);
+const statValues = useCountUp(statsEl, stats.map((s) => s.value));
+
 const perksSection = ref<HTMLElement | null>(null);
 const domainsSection = ref<HTMLElement | null>(null);
 const teamSection = ref<HTMLElement | null>(null);
 const joinSection = ref<HTMLElement | null>(null);
+const heroCopy = ref<HTMLElement | null>(null);
 
-useScrollReveal(perksSection, { selector: ".perk-card" });
-useScrollReveal(teamSection, { selector: ".team-card" });
-useScrollReveal(joinSection);
+useScrollReveal(perksSection, { selector: ".perk-row", stagger: 0.08 });
 useScrollReveal(domainsSection, { selector: ".domain-tag", stagger: 0.04 });
+useScrollReveal(teamSection, { selector: ".team-card", stagger: 0.06 });
+useScrollReveal(joinSection);
+useScrollReveal(heroCopy, { selector: ".hero-fade", stagger: 0.1 });
 
-const pad = (n: number) => String(n).padStart(2, "0");
+const letters = ["A", "B", "C", "D", "E", "F"];
+
 // Hovering (or focusing/tapping) a focus-area pill opens its popover. It is
 // positioned so it always stays inside the viewport gutter, which matters on
 // narrow phone screens where a fixed-width popover would run off the edge.
@@ -48,169 +52,112 @@ function closeOnOutsidePress(event: PointerEvent) {
   if (!(event.target as HTMLElement).closest(".domain-tag")) activeDomain.value = null;
 }
 
-onMounted(() => {
-  document.addEventListener("pointerdown", closeOnOutsidePress, { passive: true });
-
-  if (hero.value && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    // Shorter travel and tighter stagger on phones so the entrance feels quick.
-    const mobile = window.matchMedia("(max-width: 639px)").matches;
-    gsap.fromTo(
-      hero.value.querySelectorAll(".hero-punch"),
-      { y: mobile ? 14 : 24, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        duration: mobile ? 0.5 : 0.7,
-        stagger: mobile ? 0.06 : 0.1,
-        ease: "power3.out",
-        force3D: true,
-        clearProps: "transform,opacity",
-      },
-    );
-  }
-});
-
+onMounted(() => document.addEventListener("pointerdown", closeOnOutsidePress, { passive: true }));
 onUnmounted(() => document.removeEventListener("pointerdown", closeOnOutsidePress));
+
+// Word-by-word headline rise (CSS keyframes, staggered by inline delay).
+const line1 = ["Stop", "consuming", "technology."];
+const line2 = ["Start", "building", "it"];
 </script>
 
 <template>
   <div>
     <!-- Hero -->
-    <section
-      ref="hero"
-      class="bg-grid-lines cursor-glow-bg relative flex min-h-svh flex-col justify-center overflow-hidden px-4 pb-16 pt-28 sm:px-6 sm:py-32"
-    >
-      <div
-        class="pointer-events-none absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-soft opacity-50 blur-[90px] sm:h-150 sm:w-150 sm:blur-[140px]"
-      />
-      <div
-        class="pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-accent-soft opacity-30 blur-[70px] sm:h-80 sm:w-80 sm:blur-[100px]"
-      />
-      <div
-        class="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-accent-soft opacity-25 blur-[60px] sm:h-64 sm:w-64 sm:blur-[90px]"
-      />
-      <img
-        :src="smallWhite"
-        alt=""
-        aria-hidden="true"
-        class="brand-mark pointer-events-none absolute right-0 top-1/2 h-56 w-auto -translate-y-1/2 translate-x-1/4 opacity-[0.06] sm:h-105"
-      />
-
-      <div class="relative mx-auto flex w-full max-w-6xl flex-col gap-6 sm:gap-8">
-        <Badge
+    <section class="relative overflow-hidden pt-14 md:pt-24">
+      <div ref="heroCopy" class="wrap">
+        <component
+          :is="settings?.announcement_link ? 'a' : 'div'"
           v-if="settings?.announcement_text"
-          :as="settings.announcement_link ? 'a' : 'div'"
           :href="settings.announcement_link ?? undefined"
-          interactive
-          class="hero-punch w-full max-w-3xl justify-between! gap-3 border-accent! px-4! py-5! text-left sm:gap-4 sm:px-8! sm:py-7!"
+          class="hero-fade mb-8 inline-flex max-w-full items-center gap-2.5 border border-accent-dim bg-accent-soft px-3.5 py-2.5 font-mono text-xs text-accent md:mb-9"
         >
-          <span class="flex min-w-0 items-center gap-3 sm:gap-4">
-            <span
-              class="shrink-0 bg-accent px-2 py-1 font-display text-[10px] uppercase tracking-tight text-bg"
-            >
-              News
-            </span>
-            <span class="min-w-0 text-xs leading-snug tracking-normal sm:text-sm">
-              {{ settings.announcement_text }}
-            </span>
-          </span>
-          <span v-if="settings.announcement_link" class="shrink-0 text-lg" aria-hidden="true">&rarr;</span>
-        </Badge>
+          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" style="animation: blink 1.4s steps(1) infinite" />
+          <span class="min-w-0 leading-snug">{{ settings.announcement_text }}</span>
+          <span v-if="settings.announcement_link" aria-hidden="true">&rarr;</span>
+        </component>
 
-        <!-- Sized in vw so the longest line (18 mono chars) fits from 320px phones up. -->
         <h1
-          class="hero-punch flex flex-col font-display text-[clamp(1.5rem,8.4vw,6.5rem)] font-black uppercase leading-[0.92] tracking-tighter text-fg"
+          class="mb-7 max-w-[15ch] text-[clamp(2.4rem,11vw,5.4rem)] leading-[1.02] font-bold tracking-[-0.02em] md:text-[clamp(3rem,6.6vw,5.4rem)]"
         >
-          <span class="whitespace-nowrap">Stop Consuming</span>
-          <span class="self-end whitespace-nowrap text-fg-muted">Technology.</span>
-          <span class="whitespace-nowrap">Start Building It.</span>
+          <template v-for="(w, i) in line1" :key="w">
+            <span class="inline-block overflow-hidden align-top" :class="i === 2 && 'headline-fx'">
+              <span
+                class="inline-block [transform:translate3d(0,115%,0)]"
+                :style="{ animation: `wordUp 0.8s var(--ease-spring) ${0.15 + i * 0.07}s forwards` }"
+              >{{ w }}</span>
+            </span>{{ " " }}
+          </template>
+          <br />
+          <template v-for="(w, i) in line2" :key="w">
+            <span class="inline-block overflow-hidden align-top">
+              <span
+                class="inline-block [transform:translate3d(0,115%,0)]"
+                :style="{ animation: `wordUp 0.8s var(--ease-spring) ${0.4 + i * 0.07}s forwards` }"
+              >{{ w }}</span>
+            </span>{{ " " }}
+          </template>
+          <span class="inline-block h-[0.85em] w-[0.5ch] translate-y-[0.08em] bg-accent" style="animation: blink 1s steps(1) infinite" aria-hidden="true" />
         </h1>
 
-        <p
-          class="hero-punch max-w-md font-sans text-sm leading-relaxed text-fg-muted"
-        >
-          Logic Play is SRM's AI-focused builder's club — real projects, real
-          hackathons, real mentors. Not another resume line.
-        </p>
+        <div class="flex flex-col gap-10 pb-12 md:flex-row md:items-end md:gap-16 md:pb-16">
+          <div class="hero-fade max-w-115">
+            <p class="mb-6 max-w-[42ch] text-[15.5px] text-fg-muted">
+              Logic Play is SRM's AI-focused builder's club — real projects, real
+              hackathons, real mentors. Not another resume line.
+            </p>
+            <div class="flex flex-wrap gap-3">
+              <Badge :href="settings?.join_link" tone="solid" interactive arrow class="magnetic">Join the Club</Badge>
+              <Badge href="#projects" interactive class="magnetic">See what we do</Badge>
+            </div>
+          </div>
 
-        <div class="hero-punch flex flex-wrap gap-2">
-          <Badge
-            v-for="(perk, i) in perks.slice(0, 3)"
-            :key="perk.title"
-            size="sm"
-          >
-            {{ pad(i + 1) }} / {{ perk.title }}
-          </Badge>
-        </div>
-
-        <div class="hero-punch">
-          <Badge
-            :href="settings?.join_link"
-            tone="solid"
-            size="lg"
-            interactive
-            arrow
-            class="w-full sm:w-auto"
-          >
-            Join the Club
-          </Badge>
+          <div ref="statsEl" class="hero-fade flex w-full justify-between gap-6 md:ml-auto md:w-auto md:justify-start md:gap-10">
+            <div v-for="(s, i) in stats" :key="s.label">
+              <b class="block font-mono text-[1.6rem] font-bold tabular-nums md:text-[1.9rem]">{{ statValues[i] }}{{ s.suffix }}</b>
+              <span class="text-[11.5px] tracking-wide text-fg-subtle uppercase">{{ s.label }}</span>
+            </div>
+          </div>
         </div>
       </div>
-    </section>
 
-    <GridBar />
+      <Marquee />
+    </section>
 
     <!-- What we do -->
-    <section ref="perksSection" class="py-20">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6">
-        <h2
-          class="mb-12 font-display text-3xl text-center uppercase tracking-tight sm:text-4xl"
-        >
-          What We Do
-        </h2>
-      </div>
-      <div
-        class="glass-surface relative grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-x"
-      >
-        <div
-          v-for="(perk, i) in perks"
-          :key="perk.title"
-          class="perk-card relative flex flex-col gap-3 overflow-hidden p-8 sm:p-10 lg:p-14"
-          :class="
-            perks.length % 2 === 1 && i === perks.length - 1 && 'sm:col-span-2'
-          "
-        >
-          <HalftoneMark
-            :size="64"
-            :opacity="0.08"
-            color="var(--color-accent)"
-            class="pointer-events-none absolute -right-3 -top-3"
-          />
-          <span class="font-display text-xs tracking-widest text-fg-subtle">
-            {{ pad(i + 1) }} /
-          </span>
-          <span class="font-display text-lg uppercase tracking-tight">
-            {{ perk.title }}
-          </span>
-          <span class="font-sans text-sm tracking-normal text-fg-muted">
-            {{ perk.description }}
-          </span>
+    <section id="projects" ref="perksSection" class="section scroll-mt-16">
+      <div class="wrap">
+        <div class="mb-9 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 md:mb-11">
+          <h2 class="sec-title">What we do</h2>
+          <span class="max-w-[36ch] font-mono text-[13px] text-fg-subtle">how members spend their time here</span>
+        </div>
+        <div class="border-t border-border">
+          <div
+            v-for="(perk, i) in perks"
+            :key="perk.title"
+            class="perk-row group relative grid grid-cols-[2rem_1fr] items-baseline gap-x-4 gap-y-1.5 border-b border-border py-6 transition-[background-color,padding] duration-300 hover:bg-fg/[0.02] md:grid-cols-[90px_1fr_1.4fr] md:gap-6 md:py-8 md:hover:pl-3.5"
+          >
+            <span
+              class="absolute inset-y-0 left-0 w-0.5 origin-top scale-y-0 bg-accent transition-transform duration-400 group-hover:scale-y-100"
+              aria-hidden="true"
+            />
+            <span class="font-mono text-[12.5px] text-fg-subtle transition-colors duration-300 group-hover:text-accent">
+              {{ letters[i] ?? i + 1 }}
+            </span>
+            <h3 class="text-lg font-semibold md:text-xl">{{ perk.title }}</h3>
+            <p class="col-start-2 max-w-[48ch] text-[14.5px] text-fg-muted md:col-start-auto">{{ perk.description }}</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <GridBar />
-
-    <!-- Focus areas (from club brief) -->
-    <section
-      ref="domainsSection"
-      class="cursor-glow-bg relative z-10 bg-bg-elevated px-4 py-14 sm:px-6 sm:py-20"
-    >
-      <div class="relative mx-auto max-w-6xl">
-        <h2 class="mb-8 font-display text-3xl uppercase tracking-tight sm:text-4xl">
-          Focus Areas
-        </h2>
-        <div class="flex flex-wrap gap-2 sm:gap-4">
+    <!-- Focus areas -->
+    <section ref="domainsSection" class="section relative z-10 bg-bg-elevated/40">
+      <div class="wrap">
+        <div class="mb-9 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 md:mb-11">
+          <h2 class="sec-title">Focus areas</h2>
+          <span class="max-w-[36ch] font-mono text-[13px] text-fg-subtle">what you'll actually be working with</span>
+        </div>
+        <div class="flex flex-wrap gap-2.5">
           <div
             v-for="domain in domains"
             :key="domain.name"
@@ -221,17 +168,18 @@ onUnmounted(() => document.removeEventListener("pointerdown", closeOnOutsidePres
             @focusin="openDomain(domain, $event)"
             @focusout="activeDomain = null"
           >
-            <Badge
-              as="button"
+            <button
               type="button"
-              size="md"
-              interactive
-              class="px-4! py-2.5! text-xs! normal-case sm:px-5! sm:text-sm!"
-              :class="activeDomain === domain && 'border-accent!'"
+              class="cursor-pointer border px-3.5 py-2.5 font-mono text-xs uppercase transition-[border-color,color,background-color,translate,rotate] duration-300 hover:-translate-y-1 hover:-rotate-2 hover:border-accent hover:bg-accent hover:text-white"
+              :class="
+                activeDomain === domain
+                  ? 'border-accent bg-accent text-white'
+                  : 'border-border text-fg-muted'
+              "
               @click="openDomain(domain, $event)"
             >
               {{ domain.name }}
-            </Badge>
+            </button>
 
             <Transition name="domain-pop">
               <div
@@ -240,20 +188,20 @@ onUnmounted(() => document.removeEventListener("pointerdown", closeOnOutsidePres
                 :style="popoverStyle"
                 role="tooltip"
               >
-                <div class="flex flex-col gap-4 border border-border-strong bg-bg p-5 text-left">
+                <div class="flex flex-col gap-4 border border-border-strong bg-bg p-5 text-left shadow-[0_20px_40px_-20px_rgba(0,0,0,0.6)]">
                   <div class="flex flex-col gap-1.5">
-                    <span class="font-display text-sm uppercase tracking-tight">{{ domain.name }}</span>
-                    <span class="font-sans text-xs leading-relaxed text-fg-muted">{{ domain.summary }}</span>
+                    <span class="font-mono text-xs font-semibold uppercase">{{ domain.name }}</span>
+                    <span class="text-xs leading-relaxed text-fg-muted">{{ domain.summary }}</span>
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <span class="font-display text-[10px] uppercase tracking-widest text-fg-subtle">Roles</span>
-                    <ul class="flex flex-col gap-1 font-sans text-xs text-fg-muted">
+                    <span class="label">Roles</span>
+                    <ul class="flex flex-col gap-1 text-xs text-fg-muted">
                       <li v-for="role in domain.roles" :key="role">+ {{ role }}</li>
                     </ul>
                   </div>
                   <div class="flex flex-col gap-1.5">
-                    <span class="font-display text-[10px] uppercase tracking-widest text-fg-subtle">Projects</span>
-                    <ul class="flex flex-col gap-1 font-sans text-xs text-fg-muted">
+                    <span class="label">Projects</span>
+                    <ul class="flex flex-col gap-1 text-xs text-fg-muted">
                       <li v-for="project in domain.projects" :key="project">+ {{ project }}</li>
                     </ul>
                   </div>
@@ -265,63 +213,44 @@ onUnmounted(() => document.removeEventListener("pointerdown", closeOnOutsidePres
       </div>
     </section>
 
-    <GridBar />
-
     <!-- Team -->
-    <section ref="teamSection" class="px-4 py-20 sm:px-6">
-      <div class="mx-auto max-w-6xl">
-        <div class="mb-12 flex flex-wrap items-end justify-between gap-4">
-          <h2
-            class="font-display text-3xl uppercase tracking-tight sm:text-4xl"
-          >
-            Team
-          </h2>
-          <Badge to="/team" size="sm" interactive arrow>Full Team</Badge>
+    <section id="team" ref="teamSection" class="section scroll-mt-16">
+      <div class="wrap">
+        <div class="mb-9 flex flex-wrap items-end justify-between gap-4 md:mb-11">
+          <h2 class="sec-title">Team</h2>
+          <Badge to="/team" interactive arrow>Full team</Badge>
         </div>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <TeamCard v-for="member in members" :key="member.id" :member="member" />
-        </div>
+        <TeamGrid :members="members" />
       </div>
     </section>
 
-    <GridBar />
-
     <!-- Join CTA -->
-    <section
-      id="join"
-      ref="joinSection"
-      class="relative overflow-hidden px-4 py-24 text-center sm:px-6"
-    >
-      <div
-        class="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent-soft opacity-30 blur-[90px] sm:h-105 sm:w-105 sm:blur-[140px]"
+    <section id="join" ref="joinSection" class="section relative overflow-hidden text-center scroll-mt-16">
+      <span
+        v-for="n in 3"
+        :key="n"
+        class="pointer-events-none absolute top-1/2 left-1/2 h-225 w-225 rounded-full border border-border"
+        :style="{ animation: `ringExpand 6s ease-out ${(n - 1) * 2}s infinite`, opacity: 0 }"
+        aria-hidden="true"
       />
-      <div class="relative mx-auto flex max-w-2xl flex-col items-center gap-6">
-        <h2 class="font-display text-3xl uppercase tracking-tight sm:text-5xl">
-          Ready to build?
-        </h2>
-        <p class="font-sans text-sm text-fg-muted">
-          Tell us what you build. Applications are reviewed on a rolling basis.
-        </p>
-        <div class="flex flex-wrap justify-center gap-3">
-          <Badge
-            :href="settings?.join_link"
-            tone="solid"
-            size="lg"
-            interactive
-            arrow
-          >
-            Apply to Join
-          </Badge>
-          <!-- <Badge as="a" href="#" size="lg" interactive>
-            Join the Discord
-          </Badge> -->
-        </div>
+      <div class="wrap relative">
+        <h2 class="mb-3 text-[clamp(1.8rem,5vw,2.8rem)] leading-tight font-bold tracking-[-0.01em]">Ready to build?</h2>
+        <p class="mb-8 text-fg-muted">Tell us what you build. Applications are reviewed on a rolling basis.</p>
+        <Badge :href="settings?.join_link" tone="solid" size="lg" interactive arrow class="magnetic">Apply to join</Badge>
       </div>
     </section>
   </div>
 </template>
 
 <style scoped>
+.headline-fx {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-fg-subtle);
+  cursor: default;
+}
+.headline-fx:hover {
+  animation: glitch 0.5s steps(2) 1;
+}
 .domain-pop-enter-active,
 .domain-pop-leave-active {
   transition:

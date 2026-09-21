@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AccountTabs from "../components/ui/AccountTabs.vue";
 import { reactive, ref, watch } from "vue";
 import Badge from "../components/ui/Badge.vue";
 import GridBar from "../components/ui/GridBar.vue";
@@ -146,12 +147,13 @@ async function handleAddMember() {
 </script>
 
 <template>
-  <div class="px-4 py-28 sm:px-6">
+  <div class="wrap py-10 md:py-16">
     <div ref="section" class="mx-auto max-w-4xl">
-      <h1 class="mb-4 font-display text-3xl uppercase tracking-tight sm:text-5xl">
+      <AccountTabs />
+      <h1 class="page-title">
         Admin Tools
       </h1>
-      <p class="mb-12 max-w-xl font-sans text-sm text-fg-muted">
+      <p class="page-sub mb-10">
         Site announcement, the Join link, and the team roster — core team only.
       </p>
 
@@ -159,7 +161,7 @@ async function handleAddMember() {
       <section class="admin-block mb-16">
         <h2 class="mb-6 font-display text-xl uppercase tracking-tight">Site Settings</h2>
         <form
-          class="glass-surface relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-10"
+          class="glass-surface relative overflow-hidden px-6 py-8 sm:px-10 sm:py-10"
           novalidate
           @submit.prevent="handleSaveSettings"
         >
@@ -221,7 +223,7 @@ async function handleAddMember() {
           <div
             v-for="member in members"
             :key="member.id"
-            class="glass-surface relative overflow-hidden rounded-2xl px-6 py-6"
+            class="glass-surface relative overflow-hidden px-6 py-6"
           >
             <div v-if="editRows[member.id]" class="grid gap-4 sm:grid-cols-3">
               <label class="flex flex-col gap-2">
@@ -264,7 +266,7 @@ async function handleAddMember() {
         </div>
 
         <form
-          class="glass-surface relative mt-6 overflow-hidden rounded-2xl px-6 py-6"
+          class="glass-surface relative mt-6 overflow-hidden px-6 py-6"
           novalidate
           @submit.prevent="handleAddMember"
         >

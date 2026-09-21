@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery — Logic Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0908; --bg-raised:#121110; --line:#262421; --line-strong:#3a3733;
+    --text:#f2efe9; --text-dim:#948e84; --text-faint:#56514a;
+    --red:#ff3d2e; --red-dim:#7a2a22; --green:#7ee08a; --amber:#e8b04b; --cyan:#4be0e0;
+    --wrap:1180px; --ease:cubic-bezier(.16,1,.3,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Space Grotesk',sans-serif; -webkit-font-smoothing:antialiased; line-height:1.5; overflow-x:hidden; }
+  ::selection{ background:var(--red); color:#0a0908; }
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; cursor:pointer; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  .loader{ position:fixed; inset:0; z-index:200; background:var(--bg); display:flex; align-items:center; justify-content:center; transition:opacity .6s var(--ease), visibility .6s; }
+  .loader.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+  .loader-mark{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:clamp(1.4rem,4vw,2rem); letter-spacing:.08em; display:flex; gap:2px; overflow:hidden; }
+  .loader-mark span{ display:inline-block; transform:translateY(110%); animation: loaderUp .7s var(--spring) forwards; }
+  .loader-bar{ position:absolute; bottom:0; left:0; height:2px; background:var(--red); width:0%; animation: loaderBar 1.5s var(--ease) forwards; }
+  @keyframes loaderUp{ to{ transform:translateY(0); } }
+  @keyframes loaderBar{ 0%{width:0%} 100%{width:100%} }
+
+  .cursor-dot,.cursor-ring{ position:fixed; top:0; left:0; pointer-events:none; z-index:150; border-radius:50%; transform:translate(-50%,-50%); }
+  .cursor-dot{ width:6px; height:6px; background:var(--red); }
+  .cursor-ring{ width:34px; height:34px; border:1px solid var(--text-dim); transition:width .25s var(--ease),height .25s var(--ease),border-color .25s; }
+  .cursor-ring.big{ width:60px; height:60px; border-color:var(--red); }
+  @media (pointer:coarse){ .cursor-dot,.cursor-ring{ display:none; } }
+
+  .grid-bg{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:90px 90px; opacity:.32;
+    -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 30%, transparent 85%);
+            mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, black 30%, transparent 85%);
+    animation: gridDrift 30s linear infinite;
+  }
+  @keyframes gridDrift{ 0%{background-position:0 0;} 100%{background-position:90px 180px;} }
+
+  header, main, footer{ position:relative; z-index:1; }
+  .wrap{ max-width:var(--wrap); margin:0 auto; padding:0 32px; }
+
+  header{ position:sticky; top:0; z-index:50; background:rgba(10,9,8,.82); backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+    transform:translateY(-100%); animation: headerDrop .7s .1s var(--spring) forwards; }
+  @keyframes headerDrop{ to{ transform:translateY(0); } }
+  .nav{ display:flex; align-items:center; justify-content:space-between; height:64px; }
+  .wordmark{ display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono', monospace; font-weight:700; font-size:15px; border:1px solid var(--text); padding:5px 10px; transition: transform .3s var(--spring), background .3s, color .3s; }
+  .wordmark:hover{ transform:scale(1.05) rotate(-1deg); background:var(--text); color:var(--bg); }
+  .wordmark .dot{ width:6px; height:6px; background:var(--red); border-radius:50%; animation: dotPulse 1.6s ease-in-out infinite; }
+  @keyframes dotPulse{ 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.7);opacity:.5;} }
+  .nav-links{ display:flex; gap:28px; list-style:none; margin:0; padding:0; }
+  .nav-links a{ font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--text-dim); display:flex; gap:6px; align-items:baseline; position:relative; padding:4px 0; transition: color .25s var(--ease), transform .25s var(--spring); }
+  .nav-links a .idx{ color:var(--text-faint); transition: color .25s; }
+  .nav-links a::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:1px; background:var(--red); transform:scaleX(0); transform-origin:left; transition: transform .35s var(--spring); }
+  .nav-links a:hover, .nav-links a.active{ color:var(--text); transform:translateY(-2px); }
+  .nav-links a:hover .idx{ color:var(--red); }
+  .nav-links a:hover::after, .nav-links a.active::after{ transform:scaleX(1); }
+  .nav-actions{ display:flex; align-items:center; gap:10px; }
+  .icon-btn{ width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--line); background:transparent; color:var(--text-dim); transition: border-color .2s, color .2s, transform .4s var(--spring); }
+  .icon-btn:hover{ border-color:var(--text-dim); color:var(--text); transform:rotate(180deg); }
+  .btn{ font-family:'JetBrains Mono', monospace; font-size:12.5px; font-weight:600; padding:9px 16px; border:1px solid var(--text); background:transparent; color:var(--text); display:inline-flex; align-items:center; gap:8px; transition: transform .25s var(--spring), box-shadow .3s; }
+  .btn-red{ background:var(--red); border-color:var(--red); color:#fff; }
+  .btn-red:hover{ transform:translateY(-3px) scale(1.03); box-shadow:0 10px 30px -8px rgba(255,61,46,.6); }
+  .btn-red:active{ transform:translateY(0) scale(.98); }
+  .mobile-toggle{ display:none; }
+
+  .reveal{ opacity:0; transform:translateY(28px); transition: opacity .6s var(--ease), transform .6s var(--ease); transition-delay: var(--d,0s); }
+  .reveal.visible{ opacity:1; transform:none; }
+
+  .page-hero{ padding:70px 0 30px; }
+  .eyebrow-row{ display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+  .eyebrow-row .line{ width:36px; height:1px; background:var(--red); }
+  .page-title{ font-size:clamp(2.2rem,6vw,4rem); font-weight:700; letter-spacing:-.02em; margin:0 0 16px; }
+  .page-sub{ color:var(--text-dim); font-size:15.5px; max-width:60ch; margin:0; }
+
+  .filterbar{ display:flex; gap:10px; flex-wrap:wrap; margin: 40px 0 44px; }
+  .filter-btn{
+    font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:600; letter-spacing:.03em;
+    border:1px solid var(--line); background:transparent; color:var(--text-dim); padding:9px 15px;
+    transition: border-color .25s, color .25s, background .25s, transform .2s var(--spring);
+  }
+  .filter-btn:hover{ transform:translateY(-2px); border-color:var(--text-dim); color:var(--text); }
+  .filter-btn.active{ background:var(--red); border-color:var(--red); color:#fff; }
+
+  .gallery-grid{
+    display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; padding-bottom:80px;
+  }
+  .tile{
+    position:relative; aspect-ratio: 4/3; overflow:hidden; border:1px solid var(--line);
+    cursor: pointer; transition: transform .3s var(--ease), opacity .3s var(--ease), border-color .3s;
+  }
+  .tile.hidden-tile{ display:none; }
+  .tile:hover{ border-color: var(--red-dim); }
+  .tile:hover .tile-art{ transform: scale(1.08) rotate(1deg); }
+  .tile-art{
+    position:absolute; inset:0; transition: transform .5s var(--ease);
+    background-size: 26px 26px;
+  }
+  .tile-num{
+    position:absolute; top:14px; left:14px; font-family:'JetBrains Mono', monospace; font-size:11px;
+    color: rgba(255,255,255,.7); letter-spacing:.05em;
+  }
+  .tile-cap{
+    position:absolute; left:0; right:0; bottom:0; padding: 16px;
+    background: linear-gradient(to top, rgba(0,0,0,.85), transparent);
+    transform: translateY(6px); opacity:.92; transition: transform .3s var(--ease);
+  }
+  .tile:hover .tile-cap{ transform: translateY(0); }
+  .tile-cap .cat{ font-family:'JetBrains Mono', monospace; font-size:10px; color: var(--amber); letter-spacing:.08em; display:block; margin-bottom:4px; }
+  .tile-cap h4{ margin:0; font-size:.98rem; font-weight:600; color:#fff; }
+  .tile-cap .d{ font-family:'JetBrains Mono', monospace; font-size:10.5px; color: rgba(255,255,255,.6); margin-top:2px; }
+
+  .tile.pulse{ animation: tilePulse 1.6s ease-in-out 2; }
+  @keyframes tilePulse{ 0%,100%{ box-shadow: 0 0 0 0 rgba(255,61,46,0);} 50%{ box-shadow: 0 0 0 4px rgba(255,61,46,.7);} }
+
+  /* ---- lightbox ---- */
+  .lightbox{
+    position:fixed; inset:0; z-index:120; background: rgba(6,5,4,.92); backdrop-filter: blur(6px);
+    display:flex; align-items:center; justify-content:center; opacity:0; visibility:hidden;
+    transition: opacity .3s var(--ease), visibility .3s;
+  }
+  .lightbox.open{ opacity:1; visibility:visible; }
+  .lb-inner{ width:min(760px, 88vw); transform: scale(.94); transition: transform .35s var(--spring); }
+  .lightbox.open .lb-inner{ transform: scale(1); }
+  .lb-art{ width:100%; aspect-ratio:4/3; background-size:26px 26px; border:1px solid var(--line-strong); position:relative; }
+  .lb-art .tile-num{ font-size:13px; top:18px; left:18px; }
+  .lb-caption{ margin-top:16px; display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; }
+  .lb-caption .cat{ font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--amber); letter-spacing:.08em; display:block; margin-bottom:6px; }
+  .lb-caption h3{ margin:0; font-size:1.3rem; }
+  .lb-caption .d{ font-family:'JetBrains Mono', monospace; font-size:12px; color: var(--text-faint); }
+  .lb-controls{ display:flex; gap:10px; }
+  .lb-btn{
+    width:38px; height:38px; border:1px solid var(--line-strong); background:transparent; color:var(--text);
+    display:grid; place-items:center; transition: border-color .2s, background .2s, transform .2s var(--spring);
+  }
+  .lb-btn:hover{ border-color: var(--red); background: var(--red); transform: translateY(-2px); }
+  .lb-close{
+    position:absolute; top:26px; right:26px; width:40px; height:40px; border:1px solid var(--line-strong);
+    background: rgba(10,9,8,.6); color:var(--text); display:grid; place-items:center;
+    transition: border-color .2s, transform .3s var(--spring);
+  }
+  .lb-close:hover{ border-color: var(--red); transform: rotate(90deg); }
+
+  footer{ border-top:1px solid var(--line); padding:40px 0; }
+  .foot-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; }
+  .foot-links{ display:flex; gap:10px; }
+  .foot-links a{ font-family:'JetBrains Mono', monospace; font-size:12px; border:1px solid var(--line); padding:8px 12px; color:var(--text-dim); transition: all .25s var(--spring); }
+  .foot-links a:hover{ border-color:var(--text); color:var(--bg); background:var(--text); transform:translateY(-3px); }
+  .foot-meta{ display:flex; justify-content:space-between; margin-top:26px; font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--text-faint); flex-wrap:wrap; gap:10px; }
+
+  :focus-visible{ outline:2px solid var(--red); outline-offset:2px; }
+
+  @media (max-width:880px){
+    .nav-links{ position:fixed; inset:64px 0 0 0; background:var(--bg); flex-direction:column; padding:30px 24px; gap:0; transform:translateY(-8px); opacity:0; pointer-events:none; transition: opacity .25s var(--ease), transform .25s var(--ease); border-top:1px solid var(--line); }
+    .nav-links.open{ opacity:1; transform:none; pointer-events:auto; }
+    .nav-links a{ padding:16px 0; border-bottom:1px solid var(--line); font-size:14px; }
+    .mobile-toggle{ display:grid; place-items:center; width:34px; height:34px; border:1px solid var(--line); background:none; color:var(--text); }
+    .gallery-grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width:560px){
+    .wrap{ padding:0 20px; }
+    .gallery-grid{ grid-template-columns: 1fr; gap:12px; }
+    .lb-caption{ flex-direction:column; align-items:flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+    .reveal{ opacity:1 !important; transform:none !important; }
+    .loader{ display:none !important; }
+    .cursor-dot,.cursor-ring{ display:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="loader-mark mono">
+    <span style="animation-delay:.02s">L</span><span style="animation-delay:.06s">O</span><span style="animation-delay:.10s">G</span><span style="animation-delay:.14s">I</span><span style="animation-delay:.18s">C</span><span style="animation-delay:.22s">&nbsp;</span><span style="animation-delay:.26s">P</span><span style="animation-delay:.30s">L</span><span style="animation-delay:.34s">A</span><span style="animation-delay:.38s">Y</span>
+  </div>
+  <div class="loader-bar"></div>
+</div>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="grid-bg"></div>
+
+<header>
+  <div class="wrap nav">
+    <a href="index.html" class="wordmark"><span class="dot"></span>LOGIC PLAY</a>
+    <nav>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html"><span class="idx">01</span>HOME</a></li>
+        <li><a href="gallery.html" class="active"><span class="idx">02</span>GALLERY</a></li>
+        <li><a href="events.html"><span class="idx">03</span>EVENTS</a></li>
+        <li><a href="blog.html"><span class="idx">04</span>BLOG</a></li>
+        <li><a href="index.html#team"><span class="idx">05</span>TEAM</a></li>
+      </ul>
+    </nav>
+    <div class="nav-actions">
+      <a href="index.html#join" class="btn btn-red magnetic">JOIN →</a>
+      <a href="account.html" class="icon-btn" aria-label="Account" title="Account">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      </a>
+      <button class="icon-btn mobile-toggle" id="mobileToggle" aria-label="Open menu" aria-expanded="false">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap page-hero">
+    <div class="eyebrow-row reveal"><span class="line"></span><span class="mono" style="font-size:12px;color:var(--text-faint);letter-spacing:.08em;">RECAPS</span></div>
+    <h1 class="page-title reveal" style="--d:.05s">Gallery</h1>
+    <p class="page-sub reveal" style="--d:.1s">Moments from hackathons, workshops, and everything in between. Click any tile for the full recap.</p>
+
+    <div class="filterbar reveal" style="--d:.16s" id="filterbar">
+      <button class="filter-btn active" data-filter="all">ALL</button>
+      <button class="filter-btn" data-filter="hackathon">HACKATHONS</button>
+      <button class="filter-btn" data-filter="workshop">WORKSHOPS</button>
+      <button class="filter-btn" data-filter="talk">TALKS</button>
+      <button class="filter-btn" data-filter="social">SOCIALS</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="gallery-grid" id="galleryGrid"></div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <a href="index.html" class="wordmark"><span class="dot"></span>LOGIC PLAY</a>
+      <div class="foot-links">
+        <a href="gallery.html">GALLERY</a>
+        <a href="events.html">EVENTS</a>
+        <a href="index.html#team">TEAM</a>
+      </div>
+      <div class="foot-links">
+        <a href="https://instagram.com" target="_blank" rel="noopener">INSTAGRAM</a>
+        <a href="https://discord.com" target="_blank" rel="noopener">DISCORD</a>
+        <a href="https://linkedin.com" target="_blank" rel="noopener">LINKEDIN</a>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 Logic Play. All rights reserved.</span>
+      <span>Built by people who ship.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <button class="lb-close" id="lbClose" aria-label="Close">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <div class="lb-inner">
+    <div class="lb-art" id="lbArt"><span class="tile-num mono" id="lbNum"></span></div>
+    <div class="lb-caption">
+      <div>
+        <span class="cat mono" id="lbCat"></span>
+        <h3 id="lbTitle"></h3>
+        <span class="d mono" id="lbDate"></span>
+      </div>
+      <div class="lb-controls">
+        <button class="lb-btn" id="lbPrev" aria-label="Previous"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <button class="lb-btn" id="lbNext" aria-label="Next"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  window.addEventListener('load', () => {
+    const loader = document.getElementById('loader');
+    setTimeout(() => loader.classList.add('hide'), reduce ? 0 : 900);
+  });
+
+  const mobileToggle = document.getElementById('mobileToggle');
+  const navLinks = document.getElementById('navLinks');
+  mobileToggle.addEventListener('click', () => {
+    const open = navLinks.classList.toggle('open');
+    mobileToggle.setAttribute('aria-expanded', open);
+  });
+
+  if(!reduce && window.matchMedia('(pointer:fine)').matches){
+    const dot = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    window.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; dot.style.left=mx+'px'; dot.style.top=my+'px'; });
+    (function loop(){ rx+=(mx-rx)*0.16; ry+=(my-ry)*0.16; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(loop); })();
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => ring.classList.add('big'));
+      el.addEventListener('mouseleave', () => ring.classList.remove('big'));
+    });
+    document.querySelectorAll('.magnetic').forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const r = btn.getBoundingClientRect();
+        btn.style.transform = `translate(${(e.clientX-r.left-r.width/2)*0.25}px, ${(e.clientY-r.top-r.height/2)*0.35}px)`;
+      });
+      btn.addEventListener('mouseleave', () => btn.style.transform='');
+    });
+  }
+
+  // ---- gallery data (procedurally-generated circuit art, no stock photos) ----
+  const photos = [
+    { id:'genai-hackathon-2026',  cat:'hackathon', title:'GenAI Hackathon — build floor',      date:'18 Oct 2026', hue: 6   },
+    { id:'genai-hackathon-2026-2',cat:'hackathon', title:'GenAI Hackathon — demo night',        date:'18 Oct 2026', hue: 12  },
+    { id:'vision-sprint',         cat:'hackathon', title:'Vision Sprint — final judging',       date:'14 Aug 2026', hue: 200 },
+    { id:'vision-sprint-2',       cat:'hackathon', title:'Vision Sprint — team huddle',         date:'14 Aug 2026', hue: 205 },
+    { id:'pytorch-workshop',      cat:'workshop',  title:'Intro to PyTorch — live coding',      date:'8 Nov 2026',  hue: 40  },
+    { id:'finetuning-bootcamp',   cat:'workshop',  title:'LLM Fine-Tuning Bootcamp',            date:'21 Jul 2026', hue: 45  },
+    { id:'founders-fireside',     cat:'talk',      title:"Founders' Fireside — panel",          date:'2 Apr 2026',  hue: 265 },
+    { id:'orientation-mixer',     cat:'social',    title:'New-member orientation mixer',        date:'12 Feb 2026', hue: 320 },
+    { id:'club-anniversary',      cat:'social',    title:'2nd anniversary meetup',              date:'30 Jan 2026', hue: 330 }
+  ];
+
+  const grid = document.getElementById('galleryGrid');
+  photos.forEach((p, i) => {
+    const tile = document.createElement('button');
+    tile.className = 'tile reveal';
+    tile.style.setProperty('--d', (i * 0.05) + 's');
+    tile.dataset.cat = p.cat;
+    tile.dataset.id = p.id;
+    tile.setAttribute('aria-label', p.title);
+    tile.innerHTML = `
+      <div class="tile-art" style="background:
+        radial-gradient(circle at 30% 20%, hsla(${p.hue},90%,55%,.35), transparent 55%),
+        repeating-linear-gradient(135deg, hsla(${p.hue},60%,40%,.18) 0 2px, transparent 2px 26px),
+        linear-gradient(160deg, hsl(${p.hue} 30% 10%), #0a0908 70%);">
+        <span class="tile-num mono">LP · ${String(i+1).padStart(2,'0')}</span>
+      </div>
+      <div class="tile-cap">
+        <span class="cat">${p.cat.toUpperCase()}</span>
+        <h4>${p.title}</h4>
+        <div class="d">${p.date}</div>
+      </div>`;
+    grid.appendChild(tile);
+  });
+
+  const tiles = Array.from(document.querySelectorAll('.tile'));
+  const revealIO = reduce ? null : new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); revealIO.unobserve(e.target); } });
+  }, { threshold:.1 });
+  tiles.forEach(t => reduce ? t.classList.add('visible') : revealIO.observe(t));
+
+  // filtering
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  function applyFilter(cat){
+    tiles.forEach(t => {
+      const show = (cat === 'all' || t.dataset.cat === cat);
+      t.classList.toggle('hidden-tile', !show);
+    });
+  }
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyFilter(btn.dataset.filter);
+    });
+  });
+
+  // deep-link from events.html (?event=slug): highlight + scroll to matching tile
+  const params = new URLSearchParams(window.location.search);
+  const targetId = params.get('event');
+  if(targetId){
+    const match = tiles.find(t => t.dataset.id === targetId);
+    if(match){
+      setTimeout(() => {
+        match.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block:'center' });
+        match.classList.add('pulse');
+      }, 500);
+    }
+  }
+
+  // ---- lightbox ----
+  const lightbox = document.getElementById('lightbox');
+  const lbArt = document.getElementById('lbArt');
+  const lbNum = document.getElementById('lbNum');
+  const lbCat = document.getElementById('lbCat');
+  const lbTitle = document.getElementById('lbTitle');
+  const lbDate = document.getElementById('lbDate');
+  const lbClose = document.getElementById('lbClose');
+  const lbPrev = document.getElementById('lbPrev');
+  const lbNext = document.getElementById('lbNext');
+  let lastFocused = null;
+  let currentIndex = 0;
+
+  function visibleTiles(){ return tiles.filter(t => !t.classList.contains('hidden-tile')); }
+
+  function openLightbox(index){
+    const vis = visibleTiles();
+    currentIndex = ((index % vis.length) + vis.length) % vis.length;
+    const tile = vis[currentIndex];
+    const p = photos.find(ph => ph.id === tile.dataset.id);
+    lbArt.style.background = tile.querySelector('.tile-art').style.background;
+    lbNum.textContent = tile.querySelector('.tile-num').textContent;
+    lbCat.textContent = p.cat.toUpperCase();
+    lbTitle.textContent = p.title;
+    lbDate.textContent = p.date;
+    lastFocused = document.activeElement;
+    lightbox.classList.add('open');
+    lbClose.focus();
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox(){
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+    if(lastFocused) lastFocused.focus();
+  }
+  tiles.forEach((tile) => {
+    tile.addEventListener('click', () => {
+      const vis = visibleTiles();
+      openLightbox(vis.indexOf(tile));
+    });
+  });
+  lbClose.addEventListener('click', closeLightbox);
+  lbPrev.addEventListener('click', () => openLightbox(currentIndex - 1));
+  lbNext.addEventListener('click', () => openLightbox(currentIndex + 1));
+  lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', (e) => {
+    if(!lightbox.classList.contains('open')) return;
+    if(e.key === 'Escape') closeLightbox();
+    if(e.key === 'ArrowLeft') openLightbox(currentIndex - 1);
+    if(e.key === 'ArrowRight') openLightbox(currentIndex + 1);
+  });
+</script>
+
+</body>
+</html>

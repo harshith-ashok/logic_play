@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import Badge from "../components/ui/Badge.vue";
 import GridBar from "../components/ui/GridBar.vue";
+import AccountTabs from "../components/ui/AccountTabs.vue";
 import Input from "../components/ui/Input.vue";
 import { useAuth } from "../composables/useAuth";
 import { useScrollReveal } from "../composables/useScrollReveal";
@@ -86,6 +87,10 @@ async function handleSignOut() {
   router.push("/");
 }
 
+const initials = computed(() =>
+  `${profile.value?.first_name?.[0] ?? ""}${profile.value?.last_name?.[0] ?? ""}`.toUpperCase() || "LP",
+);
+
 const roleLabel: Record<string, string> = {
   core_team: "Core Team",
   member: "Member",
@@ -94,43 +99,32 @@ const roleLabel: Record<string, string> = {
 </script>
 
 <template>
-  <div class="px-4 py-28 sm:px-6">
-    <div ref="section" class="mx-auto max-w-2xl">
-      <div class="account-block mb-12 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 class="mb-2 font-display text-3xl uppercase tracking-tight sm:text-5xl">
-            Account
-          </h1>
-          <p v-if="profile" class="font-sans text-sm text-fg-muted">
-            {{ profile.username }} · {{ roleLabel[profile.role] }}
-          </p>
+  <div class="wrap py-10 md:py-16">
+    <div ref="section" class="mx-auto max-w-3xl">
+      <div class="account-block mb-8 flex flex-wrap items-start justify-between gap-5">
+        <div class="flex items-center gap-4 sm:gap-5">
+          <div
+            class="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-border-strong bg-linear-to-br from-accent-dim to-bg-elevated font-mono text-xl font-bold sm:h-19 sm:w-19"
+            aria-hidden="true"
+          >
+            {{ initials }}
+          </div>
+          <div class="min-w-0">
+            <h1 class="page-title mb-1.5">Account</h1>
+            <p v-if="profile" class="truncate font-mono text-[13px] text-fg-subtle">
+              <b class="font-medium text-fg-muted">{{ profile.username }}</b> · {{ roleLabel[profile.role] }}
+            </p>
+          </div>
         </div>
-        <button
-          type="button"
-          class="cursor-pointer border-none bg-transparent p-0"
-          @click="handleSignOut"
-        >
-          <Badge as="span" size="sm" interactive>Log out</Badge>
+        <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="handleSignOut">
+          <Badge as="span" interactive>Log out</Badge>
         </button>
       </div>
 
-      <div v-if="profile" class="account-block mb-8 flex flex-wrap gap-3">
-        <Badge v-if="profile.role === 'core_team'" to="/admin" size="sm" interactive>
-          Admin
-        </Badge>
-        <Badge v-if="profile.role !== 'volunteer'" to="/blog/dashboard" size="sm" interactive>
-          My posts
-        </Badge>
-        <Badge v-if="profile.role !== 'volunteer'" to="/leaderboard" size="sm" interactive>
-          Leaderboard
-        </Badge>
-        <Badge to="/events-attended" size="sm" interactive>
-          Events Attended
-        </Badge>
-      </div>
+      <AccountTabs class="account-block" />
 
       <form
-        class="account-block glass-surface relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-12"
+        class="account-block card px-5 py-7 sm:px-10 sm:py-10"
         novalidate
         @submit.prevent="handleSave"
       >

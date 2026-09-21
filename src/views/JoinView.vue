@@ -102,21 +102,20 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="px-4 py-28 sm:px-6">
+  <div class="wrap py-10 md:py-16">
     <div ref="section" class="mx-auto max-w-2xl">
-      <h1
-        class="join-block mb-4 font-display text-3xl uppercase tracking-tight sm:text-5xl"
+      <h1 class="page-title join-block mb-4"
       >
         Join the Club
       </h1>
-      <p class="join-block mb-12 max-w-xl font-sans text-sm text-fg-muted">
+      <p class="join-block page-sub mb-10">
         No resume padding, no fluff. Tell us what you build and where you want
         to take it — applications are reviewed on a rolling basis.
       </p>
 
       <div
         v-if="status === 'success'"
-        class="join-block glass-surface relative flex flex-col items-center gap-4 overflow-hidden rounded-3xl px-6 py-16 text-center sm:px-10"
+        class="join-block glass-surface relative flex flex-col items-center gap-4 overflow-hidden px-6 py-16 text-center sm:px-10"
       >
         <HalftoneMark :size="40" color="var(--color-accent)" />
         <h2 class="font-display text-xl uppercase tracking-tight sm:text-2xl">
@@ -133,7 +132,7 @@ async function handleSubmit() {
 
       <form
         v-else
-        class="join-block glass-surface relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-12"
+        class="join-block glass-surface relative overflow-hidden px-6 py-8 sm:px-10 sm:py-12"
         novalidate
         @submit.prevent="handleSubmit"
       >

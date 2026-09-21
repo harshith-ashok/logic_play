@@ -39,17 +39,17 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="px-4 py-28 sm:px-6">
+  <div class="wrap py-10 md:py-16">
     <div class="mx-auto max-w-md">
-      <h1 class="mb-4 font-display text-3xl uppercase tracking-tight sm:text-5xl">
+      <h1 class="page-title">
         Log In
       </h1>
-      <p class="mb-12 max-w-xl font-sans text-sm text-fg-muted">
+      <p class="page-sub mb-10">
         Welcome back. Sign in to access your account.
       </p>
 
       <form
-        class="glass-surface relative overflow-hidden rounded-3xl px-6 py-8 sm:px-10 sm:py-12"
+        class="glass-surface relative overflow-hidden px-6 py-8 sm:px-10 sm:py-12"
         novalidate
         @submit.prevent="handleSubmit"
       >

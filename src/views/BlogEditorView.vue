@@ -99,12 +99,12 @@ async function onCoverPick(event: Event) {
 </script>
 
 <template>
-  <div class="px-4 py-28 sm:px-6">
+  <div class="wrap py-10 md:py-16">
     <div class="mx-auto max-w-4xl">
-      <h1 class="mb-4 font-display text-3xl uppercase tracking-tight sm:text-5xl">
+      <h1 class="page-title">
         {{ slug ? "Edit post" : "New post" }}
       </h1>
-      <p class="mb-10 max-w-xl font-sans text-sm text-fg-muted">
+      <p class="page-sub mb-8">
         <template v-if="isCore">Core team posts go live as soon as you publish.</template>
         <template v-else>Submit when you're ready &mdash; the core team reviews it before it goes public.</template>
         <template v-if="status"> Current status: <strong class="text-fg">{{ status }}</strong>.</template>
