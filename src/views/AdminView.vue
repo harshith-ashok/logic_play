@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import AccountTabs from "../components/ui/AccountTabs.vue";
-import { reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
+import { useAuth, type UserRole } from "../composables/useAuth";
+import { useAdminUsers } from "../composables/useAdminUsers";
 import Badge from "../components/ui/Badge.vue";
 import GridBar from "../components/ui/GridBar.vue";
 import Input from "../components/ui/Input.vue";
@@ -13,6 +15,38 @@ useScrollReveal(section, { selector: ".admin-block" });
 
 const { settings, updateSettings } = useSiteSettings();
 const { members, addMember, updateMember, deleteMember } = useTeamMembers();
+
+// --- Users ---
+
+const { profile } = useAuth();
+const { users, loading: usersLoading, load: loadUsers, setRole, remove: removeUser } = useAdminUsers();
+const userQuery = ref("");
+const usersError = ref("");
+const roles: UserRole[] = ["core_team", "member", "volunteer"];
+
+const filteredUsers = computed(() => {
+  const q = userQuery.value.trim().toLowerCase();
+  if (!q) return users.value;
+  return users.value.filter((u) =>
+    `${u.username} ${u.first_name} ${u.last_name} ${u.registration_number}`.toLowerCase().includes(q),
+  );
+});
+
+onMounted(async () => {
+  usersError.value = (await loadUsers()).error ?? "";
+});
+
+async function handleRoleChange(id: string, event: Event) {
+  const select = event.target as HTMLSelectElement;
+  const { error } = await setRole(id, select.value as UserRole);
+  usersError.value = error ?? "";
+  if (error) await loadUsers(); // resync the select with the real role
+}
+
+async function handleDeleteUser(id: string, username: string) {
+  if (!confirm(`Permanently delete ${username}'s account? This can't be undone.`)) return;
+  usersError.value = (await removeUser(id)).error ?? "";
+}
 
 // --- Site settings ---
 
@@ -154,8 +188,54 @@ async function handleAddMember() {
         Admin Tools
       </h1>
       <p class="page-sub mb-10">
-        Site announcement, the Join link, and the team roster — core team only.
+        Users and roles, the site announcement, the Join link, and the team roster — core team only.
       </p>
+
+      <!-- Users -->
+      <section class="admin-block mb-16">
+        <h2 class="mb-6 font-display text-xl uppercase tracking-tight">
+          Users <span class="text-fg-subtle">({{ users.length }})</span>
+        </h2>
+        <Input v-model="userQuery" placeholder="Search name, username or reg. number" class="mb-4" />
+        <p v-if="usersError" class="mb-4 font-sans text-sm text-accent">{{ usersError }}</p>
+        <p v-if="usersLoading" class="font-sans text-sm text-fg-muted">Loading...</p>
+        <div v-else class="glass-surface relative divide-y divide-border">
+          <div
+            v-for="u in filteredUsers"
+            :key="u.id"
+            class="flex flex-wrap items-center justify-between gap-4 px-6 py-4"
+          >
+            <div class="min-w-0">
+              <p class="truncate font-display text-sm uppercase tracking-tight">
+                {{ u.first_name }} {{ u.last_name }}
+              </p>
+              <p class="truncate font-sans text-xs text-fg-muted">
+                @{{ u.username }} · {{ u.registration_number }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <select
+                :value="u.role"
+                :disabled="u.id === profile?.id"
+                class="border border-border bg-bg px-3 py-2 font-mono text-xs uppercase text-fg disabled:opacity-50"
+                :aria-label="`Role for ${u.username}`"
+                @change="handleRoleChange(u.id, $event)"
+              >
+                <option v-for="r in roles" :key="r" :value="r">{{ r.replace('_', ' ') }}</option>
+              </select>
+              <button
+                v-if="u.id !== profile?.id"
+                type="button"
+                class="cursor-pointer border-none bg-transparent p-0"
+                @click="handleDeleteUser(u.id, u.username)"
+              >
+                <Badge as="span" size="sm" interactive class="border-accent!">Delete</Badge>
+              </button>
+            </div>
+          </div>
+          <p v-if="!filteredUsers.length" class="px-6 py-6 font-sans text-sm text-fg-muted">No users found.</p>
+        </div>
+      </section>
 
       <!-- Site settings -->
       <section class="admin-block mb-16">

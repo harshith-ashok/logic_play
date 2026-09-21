@@ -49,6 +49,11 @@ function robotsTxt(siteUrl: string): Plugin {
 // `vite dev` doesn't run Vercel functions, so this serves api/*.ts locally with
 // the same rewrites as vercel.json. Handlers are plain `GET(request: Request)`
 // style exports, so the dev adapter is just Node req -> Request -> Response.
+// Keys copied from .env files into process.env. Vite re-runs the config in the
+// same process when .env changes, so these must be refreshed (a real shell
+// variable, never in this set, still wins).
+const loadedFromEnvFile = new Set<string>();
+
 function devApi(): Plugin {
   const rewrites: [RegExp, (m: RegExpMatchArray) => string][] = [
     [/^\/sitemap\.xml$/, () => "/api/sitemap"],
@@ -59,7 +64,10 @@ function devApi(): Plugin {
     apply: "serve",
     configResolved(config) {
       for (const [key, value] of Object.entries(loadEnv(config.mode, config.root, ""))) {
-        process.env[key] ??= value;
+        if (process.env[key] === undefined || loadedFromEnvFile.has(key)) {
+          process.env[key] = value;
+          loadedFromEnvFile.add(key);
+        }
       }
     },
     configureServer(server) {
