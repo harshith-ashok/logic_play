@@ -12,7 +12,7 @@ const tabs = computed(() => {
   const role = profile.value?.role;
   return [
     { to: "/account", label: "Profile" },
-    ...(role === "core_team" ? [{ to: "/admin", label: "Admin" }] : []),
+    ...(role === "core_team" ? [{ to: "/admin", label: "Admin" }, { to: "/admin/hackathons", label: "Hackathons" }] : []),
     ...(role && role !== "volunteer"
       ? [
           { to: "/blog/dashboard", label: "My posts" },
@@ -22,6 +22,9 @@ const tabs = computed(() => {
     { to: "/events-attended", label: "Events attended" },
   ];
 });
+
+// /admin/hackathons/:slug still belongs to the Hackathons tab.
+const isActive = (to: string) => (to === "/admin/hackathons" ? route.path.startsWith(to) : route.path === to);
 </script>
 
 <template>
@@ -32,7 +35,7 @@ const tabs = computed(() => {
       :to="t.to"
       class="min-h-10 shrink-0 border px-4 py-2.5 font-mono text-xs font-semibold tracking-wide whitespace-nowrap uppercase transition-[border-color,color,background-color,translate] duration-200 hover:-translate-y-0.5"
       :class="
-        route.path === t.to
+        isActive(t.to)
           ? 'border-fg bg-fg text-bg'
           : 'border-border text-fg-muted hover:border-fg-muted hover:text-fg'
       "

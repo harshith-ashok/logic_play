@@ -5,12 +5,10 @@ import Badge from "../ui/Badge.vue";
 import ThemeToggle from "../ui/ThemeToggle.vue";
 import bigWhite from "../../assets/brand/wordmark.webp";
 import { useAuth } from "../../composables/useAuth";
-import { useSiteSettings } from "../../composables/useSiteSettings";
 
 const router = useRouter();
 const route = useRoute();
 const { user, profile, signOut } = useAuth();
-const { settings } = useSiteSettings();
 
 // Press stays a real route (linked from the footer, and directly shareable)
 // but is deliberately left out of primary nav — it's a reference page, not
@@ -93,14 +91,14 @@ onBeforeUnmount(() => {
       <div class="flex items-center gap-2">
         <ThemeToggle />
         <Badge
-          :href="settings?.join_link"
+          to="/stack-roulette"
           tone="solid"
           size="sm"
           interactive
           arrow
           class="magnetic hidden sm:inline-flex"
         >
-          Join
+          Stack Roulette
         </Badge>
         <router-link
           :to="user ? '/account' : '/login'"
@@ -149,7 +147,7 @@ onBeforeUnmount(() => {
           </li>
         </ul>
         <div class="wrap flex flex-col gap-3 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          <Badge :href="settings?.join_link" tone="solid" size="lg" interactive arrow class="w-full">Join the Club</Badge>
+          <Badge to="/stack-roulette" tone="solid" size="lg" interactive arrow class="w-full">Stack Roulette</Badge>
           <button v-if="user" type="button" class="w-full cursor-pointer border-none bg-transparent p-0" @click="handleLogout">
             <Badge as="span" size="lg" interactive class="w-full">Log out</Badge>
           </button>

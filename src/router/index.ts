@@ -116,6 +116,33 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: ["core_team"], noindex: true, title: "Admin — Logic Play" },
     },
     {
+      path: "/hackathon/:slug/register",
+      name: "hackathon-register",
+      component: () => import("../views/HackathonRegisterView.vue"),
+      meta: { title: "Hackathon registration — Logic Play" },
+    },
+    {
+      path: "/stack-roulette/:slug?",
+      name: "stack-roulette",
+      component: () => import("../views/StackRouletteView.vue"),
+      meta: {
+        title: "Stack Roulette — Logic Play",
+        description: "Enter your team code to draw your hackathon tech stack and problem statement.",
+      },
+    },
+    {
+      path: "/admin/hackathons",
+      name: "admin-hackathons",
+      component: () => import("../views/AdminHackathonsView.vue"),
+      meta: { requiresAuth: true, roles: ["core_team"], noindex: true, title: "Hackathons — Logic Play" },
+    },
+    {
+      path: "/admin/hackathons/:slug",
+      name: "admin-hackathon",
+      component: () => import("../views/AdminHackathonView.vue"),
+      meta: { requiresAuth: true, roles: ["core_team"], noindex: true, title: "Hackathon — Logic Play" },
+    },
+    {
       path: "/leaderboard",
       name: "leaderboard",
       component: () => import("../views/LeaderboardView.vue"),

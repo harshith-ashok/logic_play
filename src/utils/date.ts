@@ -8,3 +8,15 @@ const formatter = new Intl.DateTimeFormat("en-US", {
 export function formatDate(date: string): string {
   return formatter.format(new Date(date));
 }
+
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
+/** Formats an ISO timestamp as "Mar 14, 3:42 PM". */
+export function formatDateTime(date: string): string {
+  return dateTimeFormatter.format(new Date(date));
+}
