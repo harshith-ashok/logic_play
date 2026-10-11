@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import Badge from "../components/ui/Badge.vue";
+import HackathonCard from "../components/hackathon/HackathonCard.vue";
 import { useScrollReveal } from "../composables/useScrollReveal";
 import { events, type ClubEvent } from "../data/events";
 
@@ -71,6 +72,8 @@ onBeforeUnmount(() => window.clearInterval(timer));
           </div>
         </div>
       </div>
+
+      <HackathonCard />
 
       <div v-if="events.length" class="mt-10 flex gap-1 border-b border-border md:mt-12" role="tablist">
         <button

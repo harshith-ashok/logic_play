@@ -217,6 +217,7 @@ const announce = computed(() => `Step ${step.value} of 2: ${steps[step.value - 1
             <Badge as="span" tone="solid" size="lg" interactive arrow>Join the WhatsApp group</Badge>
           </a>
           <p v-else class="font-sans text-xs text-fg-subtle">The WhatsApp group link will be shared soon.</p>
+          <Badge :to="`/stack-roulette/${slug}`" size="md" interactive arrow>Stack Roulette</Badge>
         </div>
 
         <!-- Closed -->

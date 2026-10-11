@@ -201,7 +201,11 @@ const announcement = computed(() => {
           />
         </div>
         <p v-if="lookupError" class="mt-6 font-sans text-sm text-accent" role="alert">{{ lookupError }}</p>
-        <div class="mt-8 flex justify-end">
+        <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
+          <p class="font-sans text-sm text-fg-muted">
+            No team code yet?
+            <router-link :to="`/hackathon/${slug}/register`" class="text-fg underline">Register your team</router-link>
+          </p>
           <button type="submit" :disabled="looking" class="cursor-pointer border-none bg-transparent p-0 disabled:opacity-50">
             <Badge as="span" tone="solid" size="md" interactive arrow>{{ looking ? "Checking…" : "Find my team" }}</Badge>
           </button>
