@@ -131,6 +131,15 @@ const router = createRouter({
       },
     },
     {
+      path: "/timer",
+      name: "timer",
+      component: () => import("../views/TimerView.vue"),
+      meta: {
+        title: "Countdown Timer — Logic Play",
+        description: "A shareable fullscreen countdown for hackathons and events.",
+      },
+    },
+    {
       path: "/admin/hackathons",
       name: "admin-hackathons",
       component: () => import("../views/AdminHackathonsView.vue"),
