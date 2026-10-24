@@ -75,6 +75,25 @@ export async function rerollStack(slug: string, code: string, leaderReg: string)
   );
 }
 
+/** Saves the team's GitHub repo (and optional Vercel deployment). Resolves with the team's new state. */
+export async function submitProject(
+  slug: string,
+  code: string,
+  leaderReg: string,
+  githubUrl: string,
+  vercelUrl: string,
+): Promise<TeamResult> {
+  return unwrap(
+    await db().rpc("hackathon_submit_project", {
+      p_slug: slug,
+      p_code: code,
+      p_leader_reg: leaderReg,
+      p_github: githubUrl,
+      p_vercel: vercelUrl || null,
+    }),
+  );
+}
+
 export async function registerTeam(
   slug: string,
   teamName: string,

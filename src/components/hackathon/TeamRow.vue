@@ -108,12 +108,20 @@ const overrideProblem = (value: string) => exec(() => setTeamProblem(props.team.
       </span>
       <span class="min-w-0 font-sans text-xs text-fg-muted">
         <span class="block truncate">{{ team.problem ?? "—" }}</span>
+        <span v-if="team.githubUrl" class="block truncate text-fg">
+          {{ team.githubUrl.replace(/^https:\/\/(www\.)?github\.com\//i, "") }}
+        </span>
         <span class="block text-fg-subtle">{{ formatDateTime(team.registeredAt) }}</span>
       </span>
     </button>
 
     <div v-if="open" class="grid gap-8 border-t border-border px-5 py-6">
       <p v-if="error" class="font-sans text-sm text-accent" role="alert">{{ error }}</p>
+
+      <section v-if="team.githubUrl" class="flex flex-wrap gap-x-6 gap-y-1 font-sans text-sm" aria-label="Submission">
+        <a :href="team.githubUrl" target="_blank" rel="noopener noreferrer" class="text-fg underline">GitHub</a>
+        <a v-if="team.vercelUrl" :href="team.vercelUrl" target="_blank" rel="noopener noreferrer" class="text-fg underline">Vercel</a>
+      </section>
 
       <section class="flex flex-wrap items-end gap-3" aria-label="Team name">
         <div class="min-w-56 flex-1">

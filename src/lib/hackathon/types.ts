@@ -87,6 +87,9 @@ export interface RosterRow {
   registered_at: string;
   problem_changes: number;
   stack_rerolls: number;
+  github_url: string | null;
+  vercel_url: string | null;
+  submitted_at: string | null;
 }
 
 export type Person = Pick<
@@ -106,6 +109,8 @@ export interface Team {
   registeredAt: string;
   problemChanges: number;
   stackRerolls: number;
+  githubUrl: string | null;
+  vercelUrl: string | null;
   people: Person[];
   leader: Person | undefined;
 }
@@ -132,4 +137,7 @@ export interface TeamResult {
   pool: Record<string, string[]>;
   problem_title: string | null;
   problem_gist: string | null;
+  /** Submitted project links, null until the team submits. */
+  github_url: string | null;
+  vercel_url: string | null;
 }

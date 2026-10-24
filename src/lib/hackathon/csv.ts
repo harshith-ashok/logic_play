@@ -16,13 +16,13 @@ export function toCsv(rows: unknown[][]): string {
 export function participantsCsv(teams: Team[], layers: string[]): string {
   const rows: unknown[][] = [
     ["Team code", "Team name", "Role", "Full name", "Registration number", "Year", "Phone", "Department", "College",
-      ...layers, "Problem statement", "Registered at"],
+      ...layers, "Problem statement", "GitHub", "Vercel", "Registered at"],
   ];
   for (const t of teams) {
     for (const p of t.people) {
       rows.push([
         t.code, t.name, p.role, p.full_name, p.registration_number, p.year_of_study, p.phone, p.department, p.college,
-        ...layers.map((l) => t.stack[l] ?? ""), t.problem ?? "", t.registeredAt,
+        ...layers.map((l) => t.stack[l] ?? ""), t.problem ?? "", t.githubUrl ?? "", t.vercelUrl ?? "", t.registeredAt,
       ]);
     }
   }
@@ -35,7 +35,7 @@ export function teamsCsv(teams: Team[], layers: string[], maxTeamSize: number): 
   const header = [
     "Team code", "Team name",
     ...slotNames.flatMap((s) => [`${s} name`, `${s} reg no`, `${s} year`, `${s} phone`, `${s} department`, `${s} college`]),
-    ...layers, "Problem statement", "Registered at",
+    ...layers, "Problem statement", "GitHub", "Vercel", "Registered at",
   ];
   const rows: unknown[][] = [header];
   for (const t of teams) {
@@ -45,7 +45,7 @@ export function teamsCsv(teams: Team[], layers: string[], maxTeamSize: number): 
       ...slots.flatMap((p) =>
         p ? [p.full_name, p.registration_number, p.year_of_study, p.phone, p.department, p.college] : Array(6).fill(""),
       ),
-      ...layers.map((l) => t.stack[l] ?? ""), t.problem ?? "", t.registeredAt,
+      ...layers.map((l) => t.stack[l] ?? ""), t.problem ?? "", t.githubUrl ?? "", t.vercelUrl ?? "", t.registeredAt,
     ]);
   }
   return toCsv(rows);

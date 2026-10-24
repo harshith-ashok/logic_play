@@ -6,7 +6,7 @@ import GridBar from "../components/ui/GridBar.vue";
 import HalftoneMark from "../components/ui/HalftoneMark.vue";
 import FormField from "../components/hackathon/FormField.vue";
 import StackReel from "../components/hackathon/StackReel.vue";
-import { chooseProblem, getLatestHackathon, getRegistrationStatus, getTeamResult, rerollStack } from "../lib/hackathon/api";
+import { chooseProblem, getLatestHackathon, getRegistrationStatus, getTeamResult, rerollStack, submitProject } from "../lib/hackathon/api";
 import type { TeamResult } from "../lib/hackathon/types";
 
 const route = useRoute();
@@ -67,6 +67,9 @@ const SPIN_STAGGER_MS = 900;
 
 function show(r: TeamResult, animate: boolean) {
   result.value = r;
+  syncSubmission(r);
+  submitted.value = false;
+  submitError.value = "";
   selected.value = null;
   changing.value = false;
   dealId.value++;
@@ -126,6 +129,41 @@ async function confirmReroll() {
     chooseError.value = (e as Error).message;
   } finally {
     rerolling.value = false;
+  }
+}
+
+// ---- project submission ----
+const githubUrl = ref("");
+const vercelUrl = ref("");
+const submitting = ref(false);
+const submitError = ref("");
+const submitted = ref(false);
+
+function syncSubmission(r: TeamResult) {
+  githubUrl.value = r.github_url ?? "";
+  vercelUrl.value = r.vercel_url ?? "";
+}
+
+async function submit() {
+  if (!result.value) return;
+  submitError.value = "";
+  submitted.value = false;
+  const gh = githubUrl.value.trim();
+  const vc = vercelUrl.value.trim();
+  if (!/^https:\/\/(www\.)?github\.com\/[^/\s]+\/[^/\s]+/i.test(gh))
+    return (submitError.value = "Enter a GitHub repository link like https://github.com/user/repo.");
+  if (vc && !/^https:\/\/[a-z0-9.-]+\.vercel\.app(\/\S*)?$/i.test(vc))
+    return (submitError.value = "The Vercel link should look like https://your-app.vercel.app.");
+  submitting.value = true;
+  try {
+    const r = await submitProject(slug.value, code.value.trim(), leaderReg.value.trim(), gh, vc);
+    result.value = r;
+    syncSubmission(r);
+    submitted.value = true;
+  } catch (e) {
+    submitError.value = (e as Error).message;
+  } finally {
+    submitting.value = false;
   }
 }
 
@@ -316,6 +354,32 @@ const announcement = computed(() => {
             </button>
           </div>
         </div>
+
+        <!-- Project submission -->
+        <form class="glass-surface mt-6 px-6 py-8 sm:px-10" novalidate @submit.prevent="submit">
+          <span class="label">Submit your project</span>
+          <p class="mt-3 font-sans text-sm text-fg-muted">
+            Team {{ result.team_code }}: add your GitHub repo{{ result.github_url ? " (resubmitting replaces it)" : "" }}.
+            The Vercel deployment is optional.
+          </p>
+          <div class="mt-5 grid gap-5 sm:grid-cols-2">
+            <FormField
+              id="sub-gh" v-model="githubUrl" label="GitHub repository" type="url" autocomplete="off"
+              placeholder="https://github.com/user/repo"
+            />
+            <FormField
+              id="sub-vc" v-model="vercelUrl" label="Vercel deployment (optional)" type="url" autocomplete="off"
+              placeholder="https://your-app.vercel.app"
+            />
+          </div>
+          <p v-if="submitError" class="mt-4 font-sans text-sm text-accent" role="alert">{{ submitError }}</p>
+          <p v-else-if="submitted" class="mt-4 font-sans text-sm text-fg" role="status">Saved. You can resubmit any time to update it.</p>
+          <div class="mt-6 flex justify-end">
+            <button type="submit" :disabled="submitting" class="cursor-pointer border-none bg-transparent p-0 disabled:opacity-50">
+              <Badge as="span" tone="solid" size="md" interactive arrow>{{ submitting ? "Saving…" : result.github_url ? "Update submission" : "Submit" }}</Badge>
+            </button>
+          </div>
+        </form>
 
         <button type="button" class="mt-8 cursor-pointer border-none bg-transparent p-0 font-sans text-xs text-fg-subtle underline" @click="reset">
           Not your team?

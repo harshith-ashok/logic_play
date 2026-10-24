@@ -131,7 +131,7 @@ const router = createRouter({
       },
     },
     {
-      path: "/timer",
+      path: "/timer/:slug?",
       name: "timer",
       component: () => import("../views/TimerView.vue"),
       meta: {

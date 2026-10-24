@@ -1,38 +1,29 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Badge from "../components/ui/Badge.vue";
 import FormField from "../components/hackathon/FormField.vue";
+import { useAuth } from "../composables/useAuth";
+import { useSharedTimer } from "../composables/useSharedTimer";
 
 const route = useRoute();
 const router = useRouter();
+const { profile } = useAuth();
+const isAdmin = computed(() => profile.value?.role === "core_team");
 
-// The timer lives entirely in the URL (?to=ISO&start=ISO&title=...) so a link
-// can be shared or put on a projector without any backend.
-function parseTime(v: unknown): number | null {
-  if (typeof v !== "string") return null;
-  const t = Date.parse(v);
-  return Number.isFinite(t) ? t : null;
+// /timer/:slug shows that timer; bare /timer shows the most recently changed one.
+const slug = computed(() => (route.params.slug ? String(route.params.slug) : undefined));
+const { timer, loading, error, remaining, progress, paused, finished, create, pause, resume, extend, remove } =
+  useSharedTimer(slug);
+
+const title = computed(() => timer.value?.title ?? "");
+const busy = ref(false);
+const actionError = ref("");
+async function act(fn: () => Promise<string>) {
+  busy.value = true;
+  actionError.value = await fn();
+  busy.value = false;
 }
-
-const target = computed(() => parseTime(route.query.to));
-const start = computed(() => parseTime(route.query.start));
-const title = computed(() => (typeof route.query.title === "string" ? route.query.title : ""));
-
-// ---- ticking ----
-const now = ref(Date.now());
-let tick: number | undefined;
-onMounted(() => {
-  tick = window.setInterval(() => (now.value = Date.now()), 250);
-  document.addEventListener("fullscreenchange", onFsChange);
-});
-onBeforeUnmount(() => {
-  window.clearInterval(tick);
-  document.removeEventListener("fullscreenchange", onFsChange);
-});
-
-const remaining = computed(() => (target.value === null ? 0 : Math.max(0, target.value - now.value)));
-const finished = computed(() => target.value !== null && remaining.value === 0);
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const parts = computed(() => {
@@ -51,26 +42,22 @@ const parts = computed(() => {
   return days > 0 ? units : units.slice(1);
 });
 
-const progress = computed(() => {
-  if (start.value === null || target.value === null || target.value <= start.value) return null;
-  return Math.min(1, Math.max(0, (now.value - start.value) / (target.value - start.value)));
-});
-
-const urgent = computed(() => !finished.value && remaining.value <= 10 * 60 * 1000);
+const urgent = computed(() => !finished.value && !paused.value && remaining.value <= 10 * 60 * 1000);
 
 // Reflect the countdown in the tab title so it's glanceable from another tab.
-const tabTime = computed(() => parts.value.map((p) => p.value).join(":"));
-watchTitle();
-function watchTitle() {
-  const base = document.title;
-  const stop = setInterval(() => {
-    document.title = target.value === null ? base : finished.value ? "Time's up — Logic Play" : `${tabTime.value} — Logic Play`;
-  }, 500);
-  onBeforeUnmount(() => {
-    clearInterval(stop);
-    document.title = base;
-  });
-}
+const baseTitle = document.title;
+watch([parts, finished, timer], () => {
+  document.title = !timer.value
+    ? baseTitle
+    : finished.value
+      ? "Time's up — Logic Play"
+      : `${parts.value.map((p) => p.value).join(":")} — Logic Play`;
+});
+onBeforeUnmount(() => {
+  document.title = baseTitle;
+  document.removeEventListener("fullscreenchange", onFsChange);
+});
+onMounted(() => document.addEventListener("fullscreenchange", onFsChange));
 
 // ---- setup form ----
 const PRESETS = [
@@ -95,10 +82,21 @@ function pickPreset(h: number) {
   minutes.value = "0";
 }
 
-function startTimer() {
+const formSlug = ref("");
+const slugOk = (v: string) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(v) && v.length <= 60;
+const slugify = (v: string) =>
+  v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+
+async function startTimer() {
   formError.value = "";
-  const startMs = Date.now();
-  let targetMs: number;
+  const name = formTitle.value.trim();
+  const id = formSlug.value.trim() || slugify(name) || "main";
+  if (!slugOk(id)) {
+    formError.value = "Link name can only use lowercase letters, numbers and dashes.";
+    return;
+  }
+  let duration = 0;
+  let endsAt: number | undefined;
   if (mode.value === "duration") {
     const h = Number(hours.value || 0);
     const m = Number(minutes.value || 0);
@@ -106,25 +104,29 @@ function startTimer() {
       formError.value = "Enter a duration greater than zero.";
       return;
     }
-    targetMs = startMs + (h * 60 + m) * 60 * 1000;
+    duration = (h * 60 + m) * 60 * 1000;
   } else {
-    targetMs = dateValue.value ? new Date(dateValue.value).getTime() : NaN;
-    if (!Number.isFinite(targetMs) || targetMs <= startMs) {
+    endsAt = dateValue.value ? new Date(dateValue.value).getTime() : NaN;
+    if (!Number.isFinite(endsAt) || endsAt <= Date.now()) {
       formError.value = "Pick a date and time in the future.";
       return;
     }
   }
-  const query: Record<string, string> = {
-    to: new Date(targetMs).toISOString(),
-    start: new Date(startMs).toISOString(),
-  };
-  if (formTitle.value.trim()) query.title = formTitle.value.trim();
-  router.push({ name: "timer", query });
+  busy.value = true;
+  const err = await create(id, name, duration, endsAt);
+  busy.value = false;
+  if (err) {
+    formError.value = err;
+    return;
+  }
+  creating.value = false;
+  router.push({ name: "timer", params: { slug: id } });
 }
 
-function reset() {
+const creating = ref(false);
+function newTimer() {
   if (document.fullscreenElement) document.exitFullscreen();
-  router.push({ name: "timer" });
+  creating.value = true;
 }
 
 // ---- display controls ----
@@ -150,63 +152,82 @@ async function copyLink() {
 }
 
 const endsAt = computed(() =>
-  target.value === null
-    ? ""
-    : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(target.value),
+  timer.value
+    ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(timer.value.ends_at))
+    : "",
 );
 </script>
 
 <template>
   <div class="wrap py-10 md:py-16">
-    <!-- Setup -->
-    <div v-if="target === null" class="mx-auto max-w-3xl">
+    <p v-if="loading" class="font-sans text-sm text-fg-muted" role="status">Loading…</p>
+
+    <div v-else-if="error" class="glass-surface mx-auto max-w-3xl px-6 py-10 text-center">
+      <p class="font-sans text-sm text-accent" role="alert">{{ error }}</p>
+    </div>
+
+    <!-- Setup (core team only) -->
+    <div v-else-if="creating || !timer" class="mx-auto max-w-3xl">
       <h1 class="page-title mb-4">Countdown Timer</h1>
-      <p class="page-sub mb-10">
-        Set up a countdown for a hackathon or any event. You get a shareable link and a fullscreen mode for the projector.
-      </p>
 
-      <form class="glass-surface relative px-6 py-8 sm:px-10 sm:py-10" novalidate @submit.prevent="startTimer">
-        <FormField id="tm-title" v-model="formTitle" label="Title (optional)" placeholder="Logic Play Hackathon" autocomplete="off" />
+      <div v-if="!isAdmin" class="glass-surface px-6 py-12 text-center">
+        <h2 class="font-display text-xl uppercase tracking-tight">No timer running</h2>
+        <p class="mt-2 font-sans text-sm text-fg-muted">The core team hasn't started one yet. This page updates by itself when they do.</p>
+      </div>
 
-        <div class="mt-8 flex flex-wrap gap-2" role="group" aria-label="Mode">
-          <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="mode = 'duration'">
-            <Badge as="span" size="sm" :tone="mode === 'duration' ? 'solid' : 'glass'">Duration</Badge>
-          </button>
-          <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="mode = 'date'">
-            <Badge as="span" size="sm" :tone="mode === 'date' ? 'solid' : 'glass'">Specific time</Badge>
-          </button>
-        </div>
+      <template v-else>
+        <p class="page-sub mb-10">
+          Starts one clock that every open page shows in sync. Share the link; changes reach everyone instantly.
+        </p>
+        <form class="glass-surface relative px-6 py-8 sm:px-10 sm:py-10" novalidate @submit.prevent="startTimer">
+          <div class="grid gap-5 sm:grid-cols-2">
+            <FormField id="tm-title" v-model="formTitle" label="Title (optional)" placeholder="Logic Play Hackathon" autocomplete="off" />
+            <FormField id="tm-slug" v-model="formSlug" label="Link name (optional)" placeholder="hackathon" hint="logicplay.../timer/hackathon" autocomplete="off" />
+          </div>
 
-        <div v-if="mode === 'duration'" class="mt-6">
-          <div class="mb-5 flex flex-wrap gap-2">
-            <button
-              v-for="p in PRESETS" :key="p.label" type="button"
-              class="cursor-pointer border-none bg-transparent p-0" @click="pickPreset(p.hours)"
-            >
-              <Badge as="span" size="sm" interactive>{{ p.label }}</Badge>
+          <div class="mt-8 flex flex-wrap gap-2" role="group" aria-label="Mode">
+            <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="mode = 'duration'">
+              <Badge as="span" size="sm" :tone="mode === 'duration' ? 'solid' : 'glass'">Duration</Badge>
+            </button>
+            <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="mode = 'date'">
+              <Badge as="span" size="sm" :tone="mode === 'date' ? 'solid' : 'glass'">Specific time</Badge>
             </button>
           </div>
-          <div class="grid gap-5 sm:grid-cols-2">
-            <FormField id="tm-hours" v-model="hours" label="Hours" inputmode="numeric" autocomplete="off" />
-            <FormField id="tm-mins" v-model="minutes" label="Minutes" inputmode="numeric" autocomplete="off" />
+
+          <div v-if="mode === 'duration'" class="mt-6">
+            <div class="mb-5 flex flex-wrap gap-2">
+              <button
+                v-for="p in PRESETS" :key="p.label" type="button"
+                class="cursor-pointer border-none bg-transparent p-0" @click="pickPreset(p.hours)"
+              >
+                <Badge as="span" size="sm" interactive>{{ p.label }}</Badge>
+              </button>
+            </div>
+            <div class="grid gap-5 sm:grid-cols-2">
+              <FormField id="tm-hours" v-model="hours" label="Hours" inputmode="numeric" autocomplete="off" />
+              <FormField id="tm-mins" v-model="minutes" label="Minutes" inputmode="numeric" autocomplete="off" />
+            </div>
           </div>
-        </div>
 
-        <div v-else class="mt-6">
-          <label for="tm-date" class="mb-2 block font-mono text-xs uppercase tracking-wide text-fg-muted">Ends at</label>
-          <input
-            id="tm-date" v-model="dateValue" type="datetime-local"
-            class="glass-surface w-full bg-transparent px-4 py-3 font-sans text-sm text-fg"
-          />
-        </div>
+          <div v-else class="mt-6">
+            <label for="tm-date" class="mb-2 block font-mono text-xs uppercase tracking-wide text-fg-muted">Ends at</label>
+            <input
+              id="tm-date" v-model="dateValue" type="datetime-local"
+              class="glass-surface w-full bg-transparent px-4 py-3 font-sans text-sm text-fg"
+            />
+          </div>
 
-        <p v-if="formError" class="mt-6 font-sans text-sm text-accent" role="alert">{{ formError }}</p>
-        <div class="mt-8 flex justify-end">
-          <button type="submit" class="cursor-pointer border-none bg-transparent p-0">
-            <Badge as="span" tone="solid" size="md" interactive arrow>Start countdown</Badge>
-          </button>
-        </div>
-      </form>
+          <p v-if="formError" class="mt-6 font-sans text-sm text-accent" role="alert">{{ formError }}</p>
+          <div class="mt-8 flex items-center justify-end gap-3">
+            <button v-if="timer" type="button" class="cursor-pointer border-none bg-transparent p-0" @click="creating = false">
+              <Badge as="span" size="sm" interactive>Cancel</Badge>
+            </button>
+            <button type="submit" :disabled="busy" class="cursor-pointer border-none bg-transparent p-0 disabled:opacity-50">
+              <Badge as="span" tone="solid" size="md" interactive arrow>{{ busy ? "Starting…" : "Start countdown" }}</Badge>
+            </button>
+          </div>
+        </form>
+      </template>
     </div>
 
     <!-- Countdown -->
@@ -219,7 +240,9 @@ const endsAt = computed(() =>
     >
       <div class="flex flex-wrap items-baseline justify-between gap-2">
         <h1 class="font-display text-xl font-black uppercase tracking-tight sm:text-3xl">{{ title || "Countdown" }}</h1>
-        <span class="font-mono text-xs uppercase text-fg-muted">Ends {{ endsAt }}</span>
+        <span class="font-mono text-xs uppercase text-fg-muted">
+          {{ paused ? "Paused" : `Ends ${endsAt}` }}
+        </span>
       </div>
 
       <div v-if="finished" class="text-center" role="status">
@@ -229,7 +252,10 @@ const endsAt = computed(() =>
         <p class="mt-4 font-mono text-sm uppercase text-fg-muted">Pencils down. Submit what you've got.</p>
       </div>
 
-      <div v-else class="flex items-start justify-center gap-3 sm:gap-8" role="timer" aria-live="off">
+      <div
+        v-else class="flex items-start justify-center gap-3 sm:gap-8"
+        :class="paused && 'opacity-50'" role="timer" aria-live="off"
+      >
         <template v-for="(p, i) in parts" :key="p.label">
           <span
             v-if="i > 0" aria-hidden="true"
@@ -249,16 +275,32 @@ const endsAt = computed(() =>
         <div v-if="progress !== null" class="mb-6 h-px w-full bg-border" aria-hidden="true">
           <div class="h-px bg-accent" :style="{ width: `${progress * 100}%` }" />
         </div>
+        <p v-if="actionError" class="mb-4 font-sans text-sm text-accent" role="alert">{{ actionError }}</p>
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="toggleFullscreen">
-            <Badge as="span" size="sm" interactive>{{ isFullscreen ? "Exit fullscreen" : "Fullscreen" }}</Badge>
-          </button>
           <div class="flex flex-wrap gap-2">
+            <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="toggleFullscreen">
+              <Badge as="span" size="sm" interactive>{{ isFullscreen ? "Exit fullscreen" : "Fullscreen" }}</Badge>
+            </button>
             <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="copyLink">
               <Badge as="span" size="sm" interactive>{{ copied ? "Copied" : "Copy link" }}</Badge>
             </button>
-            <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="reset">
+          </div>
+          <div v-if="isAdmin" class="flex flex-wrap gap-2">
+            <button
+              v-if="!finished" type="button" :disabled="busy"
+              class="cursor-pointer border-none bg-transparent p-0 disabled:opacity-50"
+              @click="act(paused ? resume : pause)"
+            >
+              <Badge as="span" size="sm" interactive>{{ paused ? "Resume" : "Pause" }}</Badge>
+            </button>
+            <button type="button" :disabled="busy" class="cursor-pointer border-none bg-transparent p-0 disabled:opacity-50" @click="act(() => extend(5 * 60 * 1000))">
+              <Badge as="span" size="sm" interactive>+5 min</Badge>
+            </button>
+            <button type="button" class="cursor-pointer border-none bg-transparent p-0" @click="newTimer">
               <Badge as="span" size="sm" interactive>New timer</Badge>
+            </button>
+            <button type="button" :disabled="busy" class="cursor-pointer border-none bg-transparent p-0 disabled:opacity-50" @click="act(remove)">
+              <Badge as="span" size="sm" interactive>Delete</Badge>
             </button>
           </div>
         </div>

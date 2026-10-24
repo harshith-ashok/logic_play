@@ -15,7 +15,8 @@
 --     hackathon_register_team(slug, ...), hackathon_latest(),
 --     hackathon_team_result(slug, code, leader reg no),
 --     hackathon_choose_problem(slug, code, leader reg no, problem id) and
---     hackathon_reroll_stack(slug, code, leader reg no). Every table is admin-only via RLS.
+--     hackathon_reroll_stack(slug, code, leader reg no) and
+--     hackathon_submit_project(slug, code, leader reg no, github url, vercel url). Every table is admin-only via RLS.
 --   * Admin = profiles.role = 'core_team' (how the rest of this site decides).
 --   * hackathon_run_draw / hackathon_create are admin-only inside the function.
 --
@@ -89,6 +90,12 @@ alter table public.hackathons add column if not exists max_problem_changes int n
 alter table public.hackathons add column if not exists max_stack_rerolls int not null default 1 check (max_stack_rerolls >= 0);
 alter table public.hackathon_teams add column if not exists problem_changes int not null default 0;
 alter table public.hackathon_teams add column if not exists stack_rerolls int not null default 0;
+-- project submission (hackathon_submit_project); vercel_url is optional
+alter table public.hackathon_teams add column if not exists github_url text
+  check (github_url is null or (char_length(github_url) <= 200 and github_url ~* '^https://(www\.)?github\.com/[^/\s]+/[^/\s]+'));
+alter table public.hackathon_teams add column if not exists vercel_url text
+  check (vercel_url is null or (char_length(vercel_url) <= 200 and vercel_url ~* '^https://[a-z0-9.-]+\.vercel\.app(/\S*)?$'));
+alter table public.hackathon_teams add column if not exists submitted_at timestamptz;
 -- an earlier revision of this file had a single reroll_count; the view that
 -- referenced it is recreated below
 drop view if exists public.hackathon_roster;
@@ -136,7 +143,8 @@ select t.hackathon_id, t.id as team_id, t.code as team_code, t.name as team_name
                    join public.hackathon_tech_options o on o.id = s.option_id
                   where s.team_id = t.id), '{}'::jsonb) as stack,
        t.problem_id, ps.title as problem_statement, ps.gist as problem_gist,
-       t.assigned_at, t.created_at as registered_at, t.problem_changes, t.stack_rerolls
+       t.assigned_at, t.created_at as registered_at, t.problem_changes, t.stack_rerolls,
+       t.github_url, t.vercel_url, t.submitted_at
 from public.hackathon_teams t
 join public.hackathon_participants p on p.team_id = t.id
 left join public.hackathon_problems ps on ps.id = t.problem_id
@@ -354,7 +362,34 @@ begin
     'pool', v_pool,
     'problems', v_problems,
     'problem_id', t.problem_id,
-    'problem_title', v_problem.title, 'problem_gist', v_problem.gist);
+    'problem_title', v_problem.title, 'problem_gist', v_problem.gist,
+    'github_url', t.github_url, 'vercel_url', t.vercel_url);
+end $$;
+
+-- Public: a team saves (or replaces) its project links. Same team proof as the
+-- rest of the roulette (code + leader reg no). Format is also enforced by the
+-- column checks; the friendly messages are here.
+create or replace function public.hackathon_submit_project(p_slug text, p_code text, p_leader_reg text,
+                                                           p_github text, p_vercel text default null)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_team uuid := public.hackathon_find_team(p_slug, p_code, p_leader_reg);
+  v_gh text := btrim(coalesce(p_github, ''));
+  v_vc text := nullif(btrim(coalesce(p_vercel, '')), '');
+begin
+  if v_team is null then raise exception 'No team matches that code and registration number.'; end if;
+  if v_gh !~* '^https://(www\.)?github\.com/[^/\s]+/[^/\s]+' or char_length(v_gh) > 200 then
+    raise exception 'Enter a GitHub repository link like https://github.com/user/repo.';
+  end if;
+  if v_vc is not null and (v_vc !~* '^https://[a-z0-9.-]+\.vercel\.app(/\S*)?$' or char_length(v_vc) > 200) then
+    raise exception 'The Vercel link should look like https://your-app.vercel.app.';
+  end if;
+
+  update public.hackathon_teams
+     set github_url = v_gh, vercel_url = v_vc, submitted_at = now()
+   where id = v_team;
+
+  return public.hackathon_team_view(v_team);
 end $$;
 
 -- Public: a team looks up its state. Same error for "no such team" and "wrong
@@ -639,6 +674,7 @@ revoke all on function public.hackathon_registration_status(text)               
 revoke all on function public.hackathon_latest()                                        from public, anon, authenticated;
 revoke all on function public.hackathon_team_result(text, text, text)                   from public, anon, authenticated;
 revoke all on function public.hackathon_choose_problem(text, text, text, int)           from public, anon, authenticated;
+revoke all on function public.hackathon_submit_project(text, text, text, text, text)   from public, anon, authenticated;
 revoke all on function public.hackathon_find_team(text, text, text)                     from public, anon, authenticated;
 revoke all on function public.hackathon_deal_stack(uuid)                                from public, anon, authenticated;
 revoke all on function public.hackathon_reroll_stack(text, text, text)                  from public, anon, authenticated;
@@ -653,6 +689,7 @@ grant execute on function public.hackathon_latest()                             
 grant execute on function public.hackathon_team_result(text, text, text)                to anon, authenticated;
 grant execute on function public.hackathon_choose_problem(text, text, text, int)        to anon, authenticated;
 grant execute on function public.hackathon_reroll_stack(text, text, text)               to anon, authenticated;
+grant execute on function public.hackathon_submit_project(text, text, text, text, text) to anon, authenticated;
 
 -- =====================================================================
 -- 5) Seed: the first hackathon (placeholders; edit from the admin dashboard)

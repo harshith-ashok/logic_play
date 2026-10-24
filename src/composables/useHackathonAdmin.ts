@@ -19,6 +19,8 @@ export function groupTeams(rows: RosterRow[]): Team[] {
         registeredAt: r.registered_at,
         problemChanges: r.problem_changes,
         stackRerolls: r.stack_rerolls,
+        githubUrl: r.github_url,
+        vercelUrl: r.vercel_url,
         people: [],
         leader: undefined,
       };
