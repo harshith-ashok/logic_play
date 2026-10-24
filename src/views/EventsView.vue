@@ -2,38 +2,56 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import Badge from "../components/ui/Badge.vue";
 import HackathonCard from "../components/hackathon/HackathonCard.vue";
-import { useScrollReveal } from "../composables/useScrollReveal";
-import { events, type ClubEvent } from "../data/events";
+import EventEditor from "../components/club/EventEditor.vue";
+import { useIsAdmin } from "../composables/useIsAdmin";
+import { listEvents, participantCounts } from "../lib/club/api";
+import type { ClubEvent } from "../lib/club/types";
 
-const root = ref<HTMLElement | null>(null);
-useScrollReveal(root, { selector: ".reveal-block", stagger: 0.06 });
+const isAdmin = useIsAdmin();
 
-const now = Date.now();
+const events = ref<ClubEvent[]>([]);
+const counts = ref<Record<string, number>>({});
+const loading = ref(true);
+const error = ref("");
+
+async function load() {
+  try {
+    [events.value, counts.value] = await Promise.all([listEvents(), participantCounts()]);
+    error.value = "";
+  } catch (e) {
+    error.value = (e as Error).message;
+  } finally {
+    loading.value = false;
+  }
+}
+
+// An event counts as upcoming until it has ended (or, with no end, until it starts).
+const endOf = (e: ClubEvent) => new Date(e.ends_at ?? e.starts_at).getTime();
+const now = ref(Date.now());
 const upcoming = computed(() =>
-  events
-    .filter((e) => new Date(e.date).getTime() >= now)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+  events.value.filter((e) => endOf(e) >= now.value).sort((a, b) => +new Date(a.starts_at) - +new Date(b.starts_at)),
 );
 const past = computed(() =>
-  events
-    .filter((e) => new Date(e.date).getTime() < now)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+  events.value.filter((e) => endOf(e) < now.value).sort((a, b) => +new Date(b.starts_at) - +new Date(a.starts_at)),
 );
 
 const tab = ref<"upcoming" | "past">("upcoming");
 const list = computed(() => (tab.value === "upcoming" ? upcoming.value : past.value));
 
-const day = (e: ClubEvent) => String(new Date(e.date).getDate()).padStart(2, "0");
-const month = (e: ClubEvent) => new Date(e.date).toLocaleString("en-US", { month: "short" }).toUpperCase();
+const day = (e: ClubEvent) => String(new Date(e.starts_at).getDate()).padStart(2, "0");
+const month = (e: ClubEvent) => new Date(e.starts_at).toLocaleString("en-US", { month: "short" }).toUpperCase();
+const time = (e: ClubEvent) =>
+  new Date(e.starts_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
-// ---- countdown to the next upcoming event ----
-const next = computed(() => upcoming.value[0] ?? null);
+// ---- countdown to the next published upcoming event ----
+const next = computed(() => upcoming.value.find((e) => e.published && new Date(e.starts_at).getTime() > now.value) ?? null);
 const left = ref({ d: "00", h: "00", m: "00", s: "00" });
 let timer: number | undefined;
 
 function tick() {
+  now.value = Date.now();
   if (!next.value) return;
-  const diff = Math.max(0, new Date(next.value.date).getTime() - Date.now());
+  const diff = Math.max(0, new Date(next.value.starts_at).getTime() - now.value);
   const p = (n: number) => String(n).padStart(2, "0");
   left.value = {
     d: p(Math.floor(diff / 86400000)),
@@ -43,27 +61,44 @@ function tick() {
   };
 }
 
+// ---- admin editor ----
+const editing = ref<ClubEvent | null>(null);
+const creating = ref(false);
+function onSaved() {
+  editing.value = null;
+  creating.value = false;
+  load();
+}
+
 onMounted(() => {
+  load();
   tick();
-  if (next.value) timer = window.setInterval(tick, 1000);
+  timer = window.setInterval(tick, 1000);
 });
 onBeforeUnmount(() => window.clearInterval(timer));
 </script>
 
 <template>
-  <div ref="root">
+  <div>
     <div class="wrap page-hero">
-      <div class="eyebrow">CALENDAR</div>
-      <h1 class="page-title">Events</h1>
-      <p class="page-sub">Workshops, hackathons, and build sessions — upcoming and past.</p>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div class="eyebrow">CALENDAR</div>
+          <h1 class="page-title">Events</h1>
+          <p class="page-sub">Workshops, hackathons, and build sessions — upcoming and past.</p>
+        </div>
+        <button v-if="isAdmin" type="button" class="cursor-pointer border-none bg-transparent p-0" @click="creating = true">
+          <Badge as="span" tone="solid" size="md" interactive arrow>New event</Badge>
+        </button>
+      </div>
 
       <div
         v-if="next"
-        class="reveal-block card mt-8 flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-5 md:mt-9"
+        class="card mt-8 flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-5 md:mt-9"
       >
         <div class="min-w-0">
           <div class="label">Next up in</div>
-          <div class="mt-1 truncate text-xl font-semibold">{{ next.title }}</div>
+          <div class="font-display mt-1 truncate text-xl">{{ next.title }}</div>
         </div>
         <div class="flex gap-5 font-mono" role="timer" :aria-label="`Time until ${next.title}`">
           <div v-for="u in [['d', 'Days'], ['h', 'Hrs'], ['m', 'Min'], ['s', 'Sec']]" :key="u[0]" class="text-center">
@@ -96,7 +131,10 @@ onBeforeUnmount(() => window.clearInterval(timer));
     </div>
 
     <div class="wrap pb-16 md:pb-24">
-      <div v-if="events.length === 0" class="reveal-block empty-state">
+      <p v-if="loading" class="font-sans text-sm text-fg-muted" role="status">Loading…</p>
+      <p v-else-if="error" class="font-sans text-sm text-accent" role="alert">{{ error }}</p>
+
+      <div v-else-if="events.length === 0" class="empty-state">
         No events yet &mdash; first drop coming soon.
       </div>
 
@@ -108,7 +146,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
         <article
           v-for="e in list"
           :key="e.id"
-          class="reveal-block group relative grid grid-cols-[64px_1fr] items-start gap-x-5 gap-y-4 border-b border-border bg-bg p-5 transition-[background-color,padding] duration-300 last:border-b-0 hover:bg-bg-elevated sm:grid-cols-[88px_1fr_auto] sm:items-center sm:gap-x-7 sm:p-7 md:hover:pl-9"
+          class="group relative grid grid-cols-[64px_1fr] items-start gap-x-5 gap-y-4 border-b border-border bg-bg p-5 transition-[background-color,padding] duration-300 last:border-b-0 hover:bg-bg-elevated sm:grid-cols-[88px_1fr_auto] sm:items-center sm:gap-x-7 sm:p-7 md:hover:pl-9"
         >
           <span class="absolute inset-y-0 left-0 w-0.5 origin-top scale-y-0 bg-accent transition-transform duration-400 group-hover:scale-y-100" aria-hidden="true" />
 
@@ -118,15 +156,22 @@ onBeforeUnmount(() => window.clearInterval(timer));
           </div>
 
           <div class="min-w-0">
-            <span v-if="e.tag" class="mb-1.5 block font-mono text-[11px] tracking-wider uppercase" :class="tab === 'past' ? 'text-fg-subtle' : 'text-accent'">{{ e.tag }}</span>
-            <h3 class="mb-1.5 text-xl font-semibold">{{ e.title }}</h3>
-            <p class="max-w-[56ch] text-sm text-fg-muted">{{ e.description }}</p>
-            <div v-if="e.meta?.length" class="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1 font-mono text-[11.5px] text-fg-subtle uppercase">
-              <span v-for="m in e.meta" :key="m">{{ m }}</span>
+            <div class="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] tracking-wider uppercase">
+              <span v-if="e.tag" :class="tab === 'past' ? 'text-fg-subtle' : 'text-accent'">{{ e.tag }}</span>
+              <span v-if="!e.published" class="border border-accent px-1.5 py-0.5 text-accent">Draft</span>
+            </div>
+            <h3 class="font-display mb-1.5 text-xl">
+              <router-link :to="`/events/${e.slug}`" class="after:absolute after:inset-0 after:content-['']">{{ e.title }}</router-link>
+            </h3>
+            <p v-if="e.summary" class="max-w-[56ch] text-sm text-fg-muted">{{ e.summary }}</p>
+            <div class="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1 font-mono text-[11.5px] text-fg-subtle uppercase">
+              <span>{{ time(e) }}</span>
+              <span v-if="e.location">{{ e.location }}</span>
+              <span v-if="counts[e.id]">{{ counts[e.id] }} participants</span>
             </div>
             <img
-              v-if="e.image"
-              :src="e.image"
+              v-if="e.cover_url"
+              :src="e.cover_url"
               :alt="e.title"
               loading="lazy"
               decoding="async"
@@ -137,11 +182,16 @@ onBeforeUnmount(() => window.clearInterval(timer));
             />
           </div>
 
-          <div v-if="e.link && tab === 'upcoming'" class="col-span-full sm:col-span-1">
-            <Badge :href="e.link" size="sm" interactive arrow class="w-full sm:w-auto">RSVP</Badge>
+          <div class="relative z-10 col-span-full flex flex-wrap gap-2 sm:col-span-1 sm:flex-col sm:items-stretch">
+            <Badge v-if="e.rsvp_link && tab === 'upcoming'" :href="e.rsvp_link" target="_blank" size="sm" interactive arrow>RSVP</Badge>
+            <button v-if="isAdmin" type="button" class="cursor-pointer border-none bg-transparent p-0 text-left" @click="editing = e">
+              <Badge as="span" size="sm" interactive class="w-full">Edit</Badge>
+            </button>
           </div>
         </article>
       </div>
     </div>
+
+    <EventEditor v-if="creating || editing" :event="editing" @close="creating = false; editing = null" @saved="onSaved" />
   </div>
 </template>

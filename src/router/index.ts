@@ -40,6 +40,13 @@ const router = createRouter({
       meta: { title: "Events — Logic Play", description: "Upcoming and past Logic Play events: workshops, build sessions and hackathons at SRM." },
     },
     {
+      // Title/description are replaced by EventDetailView once the event loads.
+      path: "/events/:slug",
+      name: "event",
+      component: () => import("../views/EventDetailView.vue"),
+      meta: { title: "Event — Logic Play" },
+    },
+    {
       path: "/blog",
       name: "blog",
       component: () => import("../views/BlogView.vue"),
