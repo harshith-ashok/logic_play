@@ -8,7 +8,6 @@ const TEXT =
 
 const words = TEXT.split(/\s+/).map((w) => ({ text: w.replace(/\*/g, ""), key: w.includes("*") }));
 const lit = ref(prefersReducedMotion() ? words.length : 0);
-const el = ref<HTMLElement | null>(null);
 
 const pin = ref<HTMLElement | null>(null);
 const flat = prefersReducedMotion();
