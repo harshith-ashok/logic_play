@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Badge from "../ui/Badge.vue";
 import ThemeToggle from "../ui/ThemeToggle.vue";
-import bigWhite from "../../assets/brand/wordmark.webp";
+import LogoMark from "../ui/LogoMark.vue";
 import { useAuth } from "../../composables/useAuth";
 
 const router = useRouter();
@@ -27,7 +27,6 @@ const open = ref(false);
 // (so /blog/some-post keeps "Blog" lit).
 const isActive = (to: string) =>
   to === "/" ? route.path === "/" : route.path === to || route.path.startsWith(`${to}/`);
-const pad = (n: number) => String(n).padStart(2, "0");
 const accountActive = computed(() =>
   ["/account", "/admin", "/leaderboard", "/events-attended", "/blog/dashboard"].includes(route.path),
 );
@@ -59,30 +58,30 @@ onBeforeUnmount(() => {
 
 <template>
   <header
-    class="fixed inset-x-0 top-0 z-50 border-b border-border bg-bg/95 md:backdrop-blur-[10px] md:bg-bg/85"
+    class="fixed inset-x-0 top-0 z-50 border-b border-border bg-bg"
     style="animation: headerDrop 0.6s var(--ease-mechanical) 0.1s backwards"
   >
     <nav class="wrap flex h-16 items-center justify-between gap-3">
       <router-link
         to="/"
-        class="magnetic flex items-center py-1.5"
+        class="flex items-center gap-3.5 py-1.5"
         aria-label="Logic Play home"
       >
-        <img :src="bigWhite" alt="Logic Play" width="75" height="16" class="brand-mark h-4 w-auto" />
+        <LogoMark class="block h-8 w-auto" />
+        <b class="font-display text-[15px] tracking-[0.02em]">Logic Play</b>
       </router-link>
 
       <ul class="hidden items-center gap-7 md:flex">
-        <li v-for="(link, i) in links" :key="link.to">
+        <li v-for="link in links" :key="link.to">
           <router-link
             :to="link.to"
-            class="group relative flex items-baseline gap-1.5 py-1 font-mono text-[12.5px] uppercase transition-colors duration-200"
+            class="mono group relative py-1.5 transition-colors duration-200"
             :class="isActive(link.to) ? 'text-fg' : 'text-fg-muted hover:text-fg'"
           >
-            <span class="text-fg-subtle transition-colors duration-200 group-hover:text-accent">{{ pad(i + 1) }}</span>
             {{ link.label }}
             <span
-              class="absolute inset-x-0 bottom-0 h-px origin-left bg-accent transition-transform duration-300"
-              :class="isActive(link.to) ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'"
+              class="absolute inset-x-0 bottom-0 h-[1.5px] origin-right bg-current transition-transform duration-500"
+              :class="isActive(link.to) ? 'scale-x-100' : 'scale-x-0 group-hover:origin-left group-hover:scale-x-100'"
             />
           </router-link>
         </li>
@@ -91,14 +90,14 @@ onBeforeUnmount(() => {
       <div class="flex items-center gap-2">
         <ThemeToggle />
         <Badge
-          to="/stack-roulette"
+          to="/join"
           tone="solid"
           size="sm"
           interactive
           arrow
           class="magnetic hidden sm:inline-flex"
         >
-          Stack Roulette
+          Join the club
         </Badge>
         <router-link
           :to="user ? '/account' : '/login'"
@@ -135,19 +134,18 @@ onBeforeUnmount(() => {
         class="fixed inset-x-0 top-16 bottom-0 z-40 overflow-y-auto overscroll-contain border-t border-border bg-bg md:hidden"
       >
         <ul class="wrap flex flex-col pt-2">
-          <li v-for="(link, i) in links" :key="link.to" class="border-b border-border">
+          <li v-for="link in links" :key="link.to" class="border-b border-border">
             <router-link
               :to="link.to"
-              class="flex items-baseline gap-3 py-5 font-mono text-base uppercase"
+              class="font-display flex items-baseline gap-3 py-5 text-3xl"
               :class="isActive(link.to) ? 'text-fg' : 'text-fg-muted'"
             >
-              <span class="text-xs text-accent">{{ pad(i + 1) }}</span>
               {{ link.label }}
             </router-link>
           </li>
         </ul>
         <div class="wrap flex flex-col gap-3 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          <Badge to="/stack-roulette" tone="solid" size="lg" interactive arrow class="w-full">Stack Roulette</Badge>
+          <Badge to="/join" tone="solid" size="lg" interactive arrow class="w-full">Join the club</Badge>
           <button v-if="user" type="button" class="w-full cursor-pointer border-none bg-transparent p-0" @click="handleLogout">
             <Badge as="span" size="lg" interactive class="w-full">Log out</Badge>
           </button>

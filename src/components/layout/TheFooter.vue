@@ -1,73 +1,67 @@
 <script setup lang="ts">
-import bigWhite from "../../assets/brand/wordmark.webp";
+import FooterMark from "./FooterMark.vue";
 
-const links = [
+const explore = [
+  { to: "/", label: "Home" },
   { to: "/gallery", label: "Gallery" },
   { to: "/events", label: "Events" },
-  // { to: "/press", label: "Press" },
+  { to: "/blog", label: "Blog" },
   { to: "/team", label: "Team" },
+];
+const more = [
+  { to: "/join", label: "Join the club" },
+  { to: "/stack-roulette", label: "Stack Roulette" },
+  { to: "/press", label: "Press kit" },
 ];
 
 // TBA: swap in real handles once socials exist.
-const socials = [{ label: "Instagram", href: "instagram.com/logic_play/" }];
+const socials = [{ label: "Instagram", href: "https://instagram.com/logic_play/" }];
 
-const chip =
-  "border border-border px-3 py-2.5 font-mono text-xs uppercase text-fg-muted transition-[background-color,border-color,color,translate] duration-200 hover:-translate-y-0.5 hover:border-fg hover:bg-fg hover:text-bg";
+function toTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 </script>
 
 <template>
-  <footer class="relative z-10 border-t border-border py-10">
+  <footer class="ink relative z-10 border-t border-border py-10">
     <div class="wrap">
-      <div
-        class="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center"
-      >
-        <router-link
-          to="/"
-          class="flex items-center gap-2.5 border border-fg px-2.5 py-1.5"
-          aria-label="Logic Play home"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-accent" />
-          <img
-            :src="bigWhite"
-            alt="Logic Play"
-            width="75"
-            height="16"
-            class="brand-mark h-4 w-auto"
-            loading="lazy"
-          />
-        </router-link>
-
-        <nav class="flex flex-wrap gap-2.5" aria-label="Footer">
-          <router-link
-            v-for="link in links"
-            :key="link.to"
-            :to="link.to"
-            :class="chip"
-            >{{ link.label }}</router-link
-          >
-        </nav>
-
-        <div class="flex flex-wrap gap-2.5">
-          <a
-            v-for="s in socials"
-            :key="s.label"
-            :href="s.href"
-            target="_blank"
-            rel="noopener"
-            :class="chip"
-            >{{ s.label }}</a
-          >
+      <FooterMark />
+      <div class="grid gap-10 border-t border-border pt-7 md:grid-cols-[1.3fr_1fr_1fr_auto]">
+        <div>
+          <span class="font-display mb-2.5 block text-[22px]">Logic Play</span>
+          <p class="max-w-[30ch] text-[15px] text-fg-muted">
+            An AI-focused innovation club at SRM. Real projects, real research, real mentors.
+          </p>
+        </div>
+        <div>
+          <h4 class="mono mb-3 text-fg-subtle">Explore</h4>
+          <ul class="grid gap-2">
+            <li v-for="l in explore" :key="l.to">
+              <router-link :to="l.to" class="text-[15px] text-fg transition-colors duration-300 hover:text-accent">{{ l.label }}</router-link>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="mono mb-3 text-fg-subtle">Club</h4>
+          <ul class="grid gap-2">
+            <li v-for="l in more" :key="l.to">
+              <router-link :to="l.to" class="text-[15px] text-fg transition-colors duration-300 hover:text-accent">{{ l.label }}</router-link>
+            </li>
+            <li v-for="s in socials" :key="s.label">
+              <a :href="s.href" target="_blank" rel="noopener" class="text-[15px] text-fg transition-colors duration-300 hover:text-accent">{{ s.label }}</a>
+            </li>
+          </ul>
+        </div>
+        <div class="md:justify-self-end">
+          <button type="button" class="btn btn--ghost magnetic" @click="toTop"><span>Back to top ↑</span></button>
         </div>
       </div>
-
-      <div
-        class="mt-6 flex flex-col gap-2 font-mono text-[11.5px] text-fg-subtle sm:flex-row sm:justify-between"
-      >
-        <span
-          >&copy; {{ new Date().getFullYear() }} Logic Play. All rights
-          reserved.</span
-        >
-        <span>Built by people who ship.</span>
+      <div class="mono mt-11 flex flex-col gap-2 text-fg-subtle sm:flex-row sm:justify-between">
+        <span>&copy; {{ new Date().getFullYear() }} Logic Play</span>
+        <span>
+          Built by people who ship. Site by
+          <a href="https://github.com/harshith-ashok" target="_blank" rel="noopener noreferrer" class="text-fg underline underline-offset-4 transition-colors duration-300 hover:text-accent">Harshith Ashok</a>
+        </span>
       </div>
     </div>
   </footer>

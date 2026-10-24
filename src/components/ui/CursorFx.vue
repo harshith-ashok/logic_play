@@ -1,65 +1,76 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
 
-// Custom cursor + ambient red glow + magnetic buttons. Fine pointers only,
-// one delegated set of listeners, transform-only writes, and the ring's
-// follow loop stops itself once it has caught up with the pointer.
+// Dot + trailing ring + optional label, blended with `difference`. The ring
+// swells over links/buttons; anything with data-cursor="word" shows that word.
+// Fine pointers only, one set of delegated listeners, and the follow loop
+// parks itself once the ring has caught up. `.magnetic` elements lean toward
+// the pointer (via the `translate` property so they keep their own transform).
+const root = ref<HTMLElement | null>(null);
 const dot = ref<HTMLElement | null>(null);
 const ring = ref<HTMLElement | null>(null);
-const glow = ref<HTMLElement | null>(null);
+const label = ref<HTMLElement | null>(null);
 
-const INTERACTIVE = "a, button, input, textarea, select, summary, [role='button']";
+const HOVER = "a, button, [role='button'], summary, label";
+const TEXTY = "input, textarea, select";
 
 let mx = 0;
 let my = 0;
 let rx = 0;
 let ry = 0;
 let raf = 0;
-let big = false;
 let magnet: HTMLElement | null = null;
 
 function loop() {
-  rx += (mx - rx) * 0.2;
-  ry += (my - ry) * 0.2;
-  if (ring.value) ring.value.style.transform = `translate3d(${rx}px, ${ry}px, 0)`;
-  raf = Math.abs(mx - rx) + Math.abs(my - ry) > 0.5 ? requestAnimationFrame(loop) : 0;
+  rx += (mx - rx) * 0.16;
+  ry += (my - ry) * 0.16;
+  const t = `translate3d(${rx}px, ${ry}px, 0)`;
+  if (ring.value) ring.value.style.transform = t;
+  if (label.value) label.value.style.transform = t;
+  raf = Math.abs(mx - rx) + Math.abs(my - ry) > 0.3 ? requestAnimationFrame(loop) : 0;
 }
 
 function onMove(e: PointerEvent) {
   if (e.pointerType !== "mouse") return;
-  if (!document.documentElement.classList.contains("cursor-on")) {
-    document.documentElement.classList.add("cursor-on");
+  const el = root.value;
+  if (!el) return;
+  if (!document.documentElement.classList.contains("has-cursor")) {
+    document.documentElement.classList.add("has-cursor");
     rx = e.clientX;
     ry = e.clientY;
   }
   mx = e.clientX;
   my = e.clientY;
-  const t = `translate3d(${mx}px, ${my}px, 0)`;
-  if (dot.value) dot.value.style.transform = t;
-  if (glow.value) glow.value.style.transform = t;
+  if (dot.value) dot.value.style.transform = `translate3d(${mx}px, ${my}px, 0)`;
   if (!raf) raf = requestAnimationFrame(loop);
 
   const target = e.target as HTMLElement | null;
-  const isBig = !!target?.closest(INTERACTIVE);
-  if (isBig !== big) {
-    big = isBig;
-    ring.value?.classList.toggle("big", big);
+  // Over text fields the native I-beam is more useful than our cursor.
+  const texty = !!target?.closest(TEXTY);
+  el.style.opacity = texty ? "0" : "1";
+  const labelled = target?.closest<HTMLElement>("[data-cursor]") ?? null;
+  const interactive = !!target?.closest(HOVER);
+  el.classList.toggle("is-hover", interactive);
+  el.classList.toggle("is-label", !!labelled);
+  if (labelled && label.value && label.value.dataset.text !== labelled.dataset.cursor) {
+    label.value.dataset.text = labelled.dataset.cursor;
+    label.value.textContent = labelled.dataset.cursor ?? "";
   }
 
   const m = target?.closest<HTMLElement>(".magnetic") ?? null;
   if (m !== magnet) {
-    if (magnet) magnet.style.transform = "";
+    if (magnet) magnet.style.translate = "";
     magnet = m;
   }
   if (m) {
     const r = m.getBoundingClientRect();
-    m.style.transform = `translate3d(${(e.clientX - r.left - r.width / 2) * 0.2}px, ${(e.clientY - r.top - r.height / 2) * 0.3}px, 0)`;
+    m.style.translate = `${(e.clientX - r.left - r.width / 2) * 0.25}px ${(e.clientY - r.top - r.height / 2) * 0.35}px`;
   }
 }
 
 function onLeave() {
-  document.documentElement.classList.remove("cursor-on");
-  if (magnet) magnet.style.transform = "";
+  document.documentElement.classList.remove("has-cursor");
+  if (magnet) magnet.style.translate = "";
   magnet = null;
 }
 
@@ -75,12 +86,15 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener("pointermove", onMove);
   document.documentElement.removeEventListener("pointerleave", onLeave);
+  document.documentElement.classList.remove("has-cursor");
   cancelAnimationFrame(raf);
 });
 </script>
 
 <template>
-  <div ref="glow" class="cursor-glow" aria-hidden="true" />
-  <div ref="ring" class="cursor-ring" aria-hidden="true" />
-  <div ref="dot" class="cursor-dot" aria-hidden="true" />
+  <div ref="root" class="cursor" aria-hidden="true">
+    <span ref="ring" class="cursor-ring" />
+    <span ref="dot" class="cursor-dot" />
+    <span ref="label" class="cursor-label" />
+  </div>
 </template>

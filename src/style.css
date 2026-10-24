@@ -1,53 +1,39 @@
 @import "tailwindcss";
 
-/* Self-hosted, latin subset only (~53KB total). Space Grotesk carries all
-   headings/body, JetBrains Mono the labels/UI chrome. */
-@font-face {
-  font-family: "Space Grotesk";
-  src: url("./fonts/SpaceGrotesk-latin.woff2") format("woff2");
-  font-weight: 300 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "JetBrains Mono";
-  src: url("./fonts/JetBrainsMono-latin.woff2") format("woff2");
-  font-weight: 100 800;
-  font-style: normal;
-  font-display: swap;
-}
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/archivo/wdth-italic.css";
+@import "@fontsource-variable/schibsted-grotesk/wght.css";
+@import "@fontsource-variable/martian-mono/wdth.css";
 
 @theme {
-  /* Surfaces — warm near-black */
-  --color-bg: #0a0908;
-  --color-bg-elevated: #121110;
-  --color-fg: #f2efe9;
+  /* Print-shop arcade: ink and paper. Process colour (C/M/Y) is only ever an
+     accent, never a fill. Magenta is the one UI accent. */
+  --color-bg: #070708;
+  --color-bg-elevated: #111113;
+  --color-fg: #f3f3f0;
 
-  --color-fg-muted: #948e84;
-  --color-fg-subtle: #6f6a61;
+  --color-fg-muted: #a6a6a0;
+  --color-fg-subtle: #7e7e86;
 
-  /* Fills + hairlines. `glass` is kept as a token name so existing utilities
-     keep working, but it is now a flat translucent fill (no backdrop blur). */
-  --color-glass: rgba(242, 239, 233, 0.025);
-  --color-glass-hover: rgba(242, 239, 233, 0.06);
-  --color-border: #262421;
-  --color-border-strong: #3a3733;
+  --color-glass: rgba(243, 243, 240, 0.04);
+  --color-glass-hover: rgba(243, 243, 240, 0.08);
+  --color-border: rgba(243, 243, 240, 0.16);
+  --color-border-strong: rgba(243, 243, 240, 0.3);
 
-  /* Signal colors */
-  --color-accent: #ff3d2e;
-  --color-accent-soft: rgba(255, 61, 46, 0.16);
-  --color-accent-dim: #7a2a22;
-  --color-amber: #e8b04b;
-  --color-cyan: #4be0e0;
+  --color-accent: #ec008c;
+  --color-accent-soft: rgba(236, 0, 140, 0.16);
+  --color-accent-dim: #6b0b4a;
+  --color-amber: #fff200;
+  --color-cyan: #00aeef;
   --color-green: #7ee08a;
 
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-display: "Archivo Variable", "Arial Black", "Helvetica Neue", Impact, sans-serif;
+  --font-sans: "Schibsted Grotesk Variable", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Martian Mono Variable", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   --ease-mechanical: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-io: cubic-bezier(0.7, 0, 0.2, 1);
 
   /* Square corners everywhere. `full` stays for dots/blobs. */
   --radius-xs: 0;
@@ -60,20 +46,20 @@
 }
 
 :root[data-theme="light"] {
-  --color-bg: #f2efe9;
-  --color-bg-elevated: #e8e4da;
-  --color-fg: #0a0908;
-  --color-fg-muted: #5a564e;
-  --color-fg-subtle: #837d72;
-  --color-glass: rgba(10, 9, 8, 0.03);
-  --color-glass-hover: rgba(10, 9, 8, 0.06);
-  --color-border: #d8d3c6;
-  --color-border-strong: #bdb7a8;
-  --color-accent: #e5301f;
-  --color-accent-soft: rgba(229, 48, 31, 0.1);
-  --color-accent-dim: #f0b9b2;
-  --color-amber: #9a6a12;
-  --color-cyan: #0f8a8a;
+  --color-bg: #f3f3f0;
+  --color-bg-elevated: #e4e4df;
+  --color-fg: #070708;
+  --color-fg-muted: #4a4a50;
+  --color-fg-subtle: #6a6a70;
+  --color-glass: rgba(7, 7, 8, 0.04);
+  --color-glass-hover: rgba(7, 7, 8, 0.08);
+  --color-border: rgba(7, 7, 8, 0.18);
+  --color-border-strong: rgba(7, 7, 8, 0.4);
+  --color-accent: #d4007f;
+  --color-accent-soft: rgba(212, 0, 127, 0.1);
+  --color-accent-dim: #f2b3da;
+  --color-amber: #8a7d00;
+  --color-cyan: #0086b8;
   --color-green: #1d8a37;
 }
 
@@ -110,24 +96,150 @@ html.theming *::after {
   background: var(--color-accent);
   color: #fff;
 }
+:root {
+  --ink: #070708;
+  --paper: #f3f3f0;
+  --cyan: #00aeef;
+  --magenta: #ec008c;
+  --yellow: #fff200;
+}
+
+/* Slabs pin the colour tokens, so shared components render correctly inside
+   them whatever the site theme is. */
+.ink {
+  background: #070708;
+  color: #f3f3f0;
+  --color-bg: #070708;
+  --color-bg-elevated: #111113;
+  --color-fg: #f3f3f0;
+  --color-fg-muted: #a6a6a0;
+  --color-fg-subtle: #7e7e86;
+  --color-glass: rgba(243, 243, 240, 0.04);
+  --color-glass-hover: rgba(243, 243, 240, 0.08);
+  --color-border: rgba(243, 243, 240, 0.16);
+  --color-border-strong: rgba(243, 243, 240, 0.3);
+  --color-accent: #ec008c;
+}
+.paper {
+  background: #f3f3f0;
+  color: #070708;
+  --color-bg: #f3f3f0;
+  --color-bg-elevated: #e4e4df;
+  --color-fg: #070708;
+  --color-fg-muted: #4a4a50;
+  --color-fg-subtle: #6a6a70;
+  --color-glass: rgba(7, 7, 8, 0.04);
+  --color-glass-hover: rgba(7, 7, 8, 0.08);
+  --color-border: rgba(7, 7, 8, 0.18);
+  --color-border-strong: rgba(7, 7, 8, 0.4);
+  --color-accent: #d4007f;
+}
+
+/* Shared print-shop primitives. */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  font-stretch: 87.5%;
+}
+.spark {
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  background: currentColor;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  flex: none;
+}
+/* Buttons: parallelograms cut at the logo's slant. */
+.btn {
+  --bg: var(--paper);
+  --fg: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-stretch: 87.5%;
+  padding: 16px 26px;
+  border: 0;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+  transform: skewX(-11deg);
+  transition: box-shadow 0.3s var(--ease-mechanical);
+}
+.btn > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  transform: skewX(11deg);
+}
+.btn:hover,
+.btn:focus-visible {
+  box-shadow: -4px 0 0 var(--cyan), 4px 0 0 var(--magenta), 0 3px 0 var(--yellow);
+}
+.btn--ghost {
+  --bg: transparent;
+  --fg: currentColor;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.btn--ghost:hover,
+.btn--ghost:focus-visible {
+  box-shadow: inset 0 0 0 1.5px currentColor, -4px 0 0 var(--cyan), 4px 0 0 var(--magenta);
+}
+
+/* Old-TV static over everything (see TvStatic.vue). */
+.tv-static {
+  position: fixed;
+  inset: -60px;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.07;
+  animation: tvStatic 1s steps(6) infinite;
+  will-change: transform;
+}
+@keyframes tvStatic {
+  0% { transform: translate3d(0, 0, 0); }
+  20% { transform: translate3d(-40px, 20px, 0); }
+  40% { transform: translate3d(30px, -45px, 0); }
+  60% { transform: translate3d(-25px, -15px, 0); }
+  80% { transform: translate3d(45px, 40px, 0); }
+}
+:root[data-theme="light"] .tv-static {
+  opacity: 0.05;
+}
+
+/* Wide italic display face for every heading that asks for font-display. */
+@layer components {
+  .font-display {
+    font-style: italic;
+    font-stretch: 125%;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+}
+
+
 
 :focus-visible {
   outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline-offset: 4px;
 }
 
 /* ---------- Shared layout/type primitives (layer: overridable by utilities) ---------- */
 @layer components {
-  .wrap {
+  .wrap,
+  .lp-wrap {
     width: 100%;
-    max-width: 1180px;
+    max-width: 1440px;
     margin-inline: auto;
-    padding-inline: 1.25rem;
-  }
-  @media (min-width: 640px) {
-    .wrap {
-      padding-inline: 2rem;
-    }
+    padding-inline: clamp(16px, 4vw, 64px);
   }
 
   /* Page top block: eyebrow + title + sub */
@@ -142,25 +254,32 @@ html.theming *::after {
   .eyebrow {
     display: flex;
     align-items: center;
-    gap: 0.875rem;
-    margin-bottom: 1.125rem;
+    gap: 12px;
+    margin-bottom: 1.5rem;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    color: var(--color-fg-subtle);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-stretch: 87.5%;
   }
   .eyebrow::before {
     content: "";
-    width: 2.25rem;
-    height: 1px;
-    background: var(--color-accent);
+    width: 11px;
+    height: 11px;
+    background: currentColor;
+    clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
   }
   .page-title {
     margin: 0 0 1rem;
-    font-size: clamp(2.2rem, 8vw, 4rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1.05;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-stretch: 125%;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: clamp(2.2rem, 7vw, 4.5rem);
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+    text-wrap: balance;
   }
   .page-sub {
     max-width: 60ch;
@@ -168,10 +287,14 @@ html.theming *::after {
     color: var(--color-fg-muted);
   }
   .sec-title {
-    font-size: 1.7rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    line-height: 1.15;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-stretch: 125%;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    letter-spacing: -0.03em;
+    line-height: 0.9;
   }
   .section {
     border-top: 1px solid var(--color-border);
@@ -195,7 +318,7 @@ html.theming *::after {
   .label {
     font-family: var(--font-mono);
     font-size: 0.6875rem;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--color-fg-subtle);
   }
@@ -206,41 +329,6 @@ html.theming *::after {
     font-family: var(--font-mono);
     font-size: 0.8125rem;
     color: var(--color-fg-subtle);
-  }
-}
-
-/* ---------- Background: static circuit grid (no animated repaint) ---------- */
-.grid-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(var(--color-border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
-  background-size: 90px 90px;
-  opacity: 0.35;
-  -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 85%);
-  mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 85%);
-}
-.node {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  background: var(--color-fg-subtle);
-  transform: rotate(45deg);
-  animation: nodePulse 4s ease-in-out infinite;
-}
-@keyframes nodePulse {
-  0%,
-  100% {
-    opacity: 0.4;
-    transform: rotate(45deg) scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: rotate(45deg) scale(1.8);
-    background: var(--color-accent);
   }
 }
 
@@ -475,65 +563,73 @@ html.theming *::after {
 .hljs-literal,
 .hljs-meta { color: var(--color-accent); }
 
-/* ---------- Cursor FX (fine pointers only; see CursorFx.vue) ---------- */
-.cursor-dot,
-.cursor-ring,
-.cursor-glow {
+/* ---------- Cursor (fine pointers only; see CursorFx.vue) ---------- */
+.cursor {
   position: fixed;
-  top: 0;
   left: 0;
+  top: 0;
+  z-index: 95;
   pointer-events: none;
-  opacity: 0;
-  will-change: transform;
+  mix-blend-mode: difference;
+  display: none;
+}
+.has-cursor .cursor {
+  display: block;
+}
+.has-cursor,
+.has-cursor a,
+.has-cursor button,
+.has-cursor canvas,
+.has-cursor [role="button"],
+.has-cursor summary,
+.has-cursor label {
+  cursor: none;
 }
 .cursor-dot {
-  z-index: 150;
+  position: absolute;
   width: 6px;
   height: 6px;
   margin: -3px 0 0 -3px;
-  border-radius: 9999px;
-  background: var(--color-accent);
+  background: #f3f3f0;
+  border-radius: 50%;
+  will-change: transform;
 }
 .cursor-ring {
-  z-index: 150;
-  width: 34px;
-  height: 34px;
-  margin: -17px 0 0 -17px;
-  border: 1px solid var(--color-fg-muted);
-  border-radius: 9999px;
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border: 1.5px solid #f3f3f0;
+  border-radius: 50%;
   transition:
-    width 0.25s var(--ease-mechanical),
-    height 0.25s var(--ease-mechanical),
-    margin 0.25s var(--ease-mechanical),
-    border-color 0.25s;
+    width 0.45s var(--ease-mechanical),
+    height 0.45s var(--ease-mechanical),
+    margin 0.45s var(--ease-mechanical),
+    background 0.3s;
+  will-change: transform;
 }
-.cursor-ring.big {
-  width: 60px;
-  height: 60px;
-  margin: -30px 0 0 -30px;
-  border-color: var(--color-accent);
+.cursor-label {
+  position: absolute;
+  left: 26px;
+  top: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f3f3f0;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+  will-change: transform;
 }
-.cursor-glow {
-  z-index: 0;
-  width: 520px;
-  height: 520px;
-  margin: -260px 0 0 -260px;
-  border-radius: 9999px;
-  background: radial-gradient(circle, var(--color-accent-soft), transparent 70%);
+.cursor.is-hover .cursor-ring {
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  background: #f3f3f0;
 }
-.cursor-on .cursor-dot,
-.cursor-on .cursor-ring {
+.cursor.is-label .cursor-label {
   opacity: 1;
-}
-.cursor-on .cursor-glow {
-  opacity: 0.8;
-}
-@media (pointer: coarse) {
-  .cursor-dot,
-  .cursor-ring,
-  .cursor-glow {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -551,18 +647,8 @@ html.theming *::after {
     opacity: 1 !important;
     transform: none !important;
   }
-  .cursor-dot,
-  .cursor-ring,
-  .cursor-glow {
+  .cursor,
+  .tv-static {
     display: none !important;
   }
-}
-
-/* Headings stay mixed-case even where a page still carries the older
-   `uppercase` utility; small labels/buttons keep their caps. */
-h1.uppercase,
-h2.uppercase,
-h3.uppercase,
-h4.uppercase {
-  text-transform: none;
 }
